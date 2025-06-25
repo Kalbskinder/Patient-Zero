@@ -1,0 +1,175 @@
+# You can use Minecraft color codes with '§' in all messages (e.g., §a, §b, §c, etc.)
+# You can find a tool to generate colored messages here: https://tools.nauticalhosting.org/rgbgen/
+# and a list for minecraft color codes here: https://htmlcolorcodes.com/minecraft-color-codes/
+
+roles:
+  survivor: "§aSurvivor"
+  corrupted: "§cCorrupted"
+  patientzero: "§cPatient Zero"
+
+
+messages:
+  # An optional prefix used for game messages.
+  prefix: ""
+
+  # Message for when the Patient-Zero dies
+  # %player% - Returns the username of the Patient-Zero
+  ptz-dead: "§c§lPatient-Zero died! §r§cIt was %player%"
+  ptz-dead-info: "§eCorrupted players will no longer respawn!"
+
+  # %time% - The time until the game starts (returns colored)
+  gamestart: "§eGame is starting in §c%time%§es"
+
+
+  # %time% - The time until the roles are assigned
+  roleassign: "§eRoles are assigned in §c%time%§es"
+
+  # %player% - The name of the player who executed the command
+  # %player-count% - current number of players in the queue
+  # %max-player-count% - maximum number of players allowed
+  playerjoin: "§a+ §7You joined the queue (§a%player-count%§7/§a%max-player-count%§7)"
+  playerleave: "§c- §7You left the queue (§c%player-count%§7/§a%max-player-count%§7)"
+
+  # %player% - the name of the player who joined or left
+  # %player-count% - current number of players in the queue
+  # %max-player-count% - maximum number of players allowed
+  broadcast-playerjoin: "§a+ §e%player% §7joined the queue (§a%player-count%§7/§a%max-player-count%§7)"
+  broadcast-playerleave: "§c- §e%player% §7left the queue (§c%player-count%§7/§a%max-player-count%§7)"
+
+  winners:
+    survivors: "§aSurvivors"
+    ptz: "§cCorrupted"
+
+  # %winners% - Returns winners.survivors or winners.ptz
+  # %kills% - Returns the players kills
+  end-message:
+    - "§a§l--------------------------------------"
+    - " "
+    - "                         §e§lPatient-Zero              "
+    - " "
+    - "                       §fWinners: %winners%          "
+    - "                          §fKills: §a%kills%           "
+    - " "
+    - "§a§l--------------------------------------"
+
+titles:
+  roles:
+    survivor:
+      title: "§aROLE: Survivor"
+      subtitle: "§eStay alive as long as possible!"
+    patientzero:
+      title: "§cROLE: Patient-Zero"
+      subtitle: "§eSecretly corrupt other players!"
+    corrupted:
+      title: "§cCorrupted"
+      subtitle: "§eYou have been corrupted!"
+    corrupted-respawn:
+      title: "§cYou died!"
+      subtitle: "§eRespawning in §c%time%s§e!" # %time% - Returns the time until the player respawns
+
+    # Title for when the player can no longer respawn
+    final-death:
+      title: "§cYou died!"
+      subtitle: "§eYou can't respawn anymore!"
+  win:
+    title: "§aYOU WIN!"
+    subtitle: ""
+  lose:
+    title: "§cYOU LOSE!"
+    subtitle: ""
+
+# Available placeholders:
+# %player% - the players username
+# %role% - The players ingame role (Patient-Zero, Corrupted, Survivor) roles are returned with a color (§a or §c)
+# %survivors% - The count of players with the role "Survivor"
+# %corrupted% - The count of players with the role "Corrupted"
+# %timer% - The game timer
+# %kills% - The amount of kills a player has
+# %map% - The name of the map the game is currently on
+scoreboard:
+  title: "§e§lPatient-Zero"
+  lines:
+    - " "
+    - "Role: %role%"
+    - " "
+    - "Time left: §a%timer%"
+    - " "
+    - "Survivors: §a%survivors%"
+    - "Corrupted: §c%corrupted%"
+    - " "
+    - "Kills: §a%kills%"
+    - " "
+    - "Map: §a%map%"
+
+settings:
+  # The time a game takes in seconds
+  gametime: 120
+
+  executes:
+    # Replace with /hub or /spawn
+    playerOnLeaveQueue: "/me Teleport me!"
+    playerOnGameEnd: "/me Teleport me!"
+    playerOnFinalDeath: "/me Teleport me!"
+
+  quit-item:
+    item: "minecraft:red_bed"
+    name: "§cQuit §7(Right-click)"
+    amount: 1
+    slot: 8 # Hotbar slot 9
+    lore:
+      - "§b "
+      - "§eRight-click while holding the item"
+      - "§eto leave the queue."
+
+  # These are the items a player is given based on their role
+  game-items:
+    # Survivor Role
+    survivor:
+      bow:
+        name: "§aBasic Bow"
+        lore:
+          - "§7Defend yourself!"
+      arrows:
+        name: "§aArrow"
+        amount: 32
+        lore:
+          - "§7Deadly arrows"
+    # Corrupted Role
+    corrupted:
+      sword:
+        type: "minecraft:iron_sword"
+        name: "§aSword"
+        lore:
+          - "§7Eliminate survivors!"
+      armor:
+        helmet:
+          type: "minecraft:iron_helmet"
+          name: "§cIron Helmet"
+        leggings:
+          type: "minecraft:iron_leggings"
+          name: "§cIron Leggings"
+        boots:
+          type: "minecraft:iron_boots"
+          name: "§cIron Boots"
+    # Patient-Zero Role
+    patientzero:
+      bow:
+        name: "§aBasic Bow"
+        lore:
+          - "§7Defend yourself!"
+      sword:
+        type: "minecraft:iron_sword"
+        name: "§aSword"
+        lore:
+          - "§7Eliminate survivors!"
+
+  double-jump:
+    enabled: false
+    velocity: 0.5
+    cooldown: 10 # Cooldown in seconds
+
+    # %time% - the remaining cooldown time (in seconds)
+    cooldown-message: "§cYou must wait §e%time% §cseconds before double jumping again!"
+
+# Your maps will be saved here
+maps: []

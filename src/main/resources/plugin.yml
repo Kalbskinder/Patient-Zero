@@ -1,0 +1,22 @@
+name: Patient-Zero
+version: '1.0.0'
+main: me.kalbskinder.patientZero.PatientZero
+description: A plugin that adds a new game mode called Patient-Zero
+api-version: '1.21'
+author: Kalbskinder
+
+commands:
+  ptz:
+    description: Main command
+    usage: /ptz <args>
+
+permissions:
+  ptz.join:
+    description: Allows a player to run '/ptz join <map-name>'
+    default: true
+  ptz.leave:
+    description: Allows a player to run '/ptz leave'
+    default: true
+  ptz.admin:
+    description: Allows a player to access all of the '/ptz <args>' commands.
+    default: op

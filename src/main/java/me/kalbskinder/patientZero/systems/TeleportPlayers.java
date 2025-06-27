@@ -1,6 +1,7 @@
 package me.kalbskinder.patientZero.systems;
 
 import me.kalbskinder.patientZero.PatientZero;
+import me.kalbskinder.patientZero.utils.MMUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -45,7 +46,7 @@ public class TeleportPlayers {
         // This can be done by using the in game command '/ptz addspawn <map-name> <role>'
         if (locations.isEmpty()) {
             logger.warning("No spawn locations available for map: " + map);
-            queue.getPlayers().forEach(player -> { player.sendMessage("§cNo spawn locations found! You can configure them by using '/ptz addspawn <map-name> <role>'. For more information type '/ptz help'"); });
+            queue.getPlayers().forEach(player -> { MMUtils.sendMessage(player, "<red>No spawn locations found! You can configure them by using '/ptz addspawn <map-name> <role>'. For more information type '/ptz help'"); });
             return;
         }
 
@@ -116,11 +117,12 @@ public class TeleportPlayers {
             Location targetLocation = locations.get(randomIndex);
             if (!player.teleport(targetLocation)) {
                 logger.warning("Failed to teleport player " + player.getName() + " to: " + targetLocation);
-                player.sendMessage("§cTeleportation failed! Please contact a staff member!");
+                MMUtils.sendMessage(player, "<red>Teleportation failed! Please contact a staff member!");
             }
         }
     }
 
+    // Teleports a player to a random defined corrupted spawn location
     public static void teleportPlayerToCorruptedLocations(Player player) {
         List<Location> locations = new ArrayList<>();
         List<Player> players = new ArrayList<>();
@@ -128,6 +130,7 @@ public class TeleportPlayers {
 
         String mapName = QueueManager.getMapOfPlayer(player);
 
+        // Get the spawnpoints
         locations.addAll(loadSpawnLocations("maps." + mapName + ".spawns.corrupted", "corrupted"));
 
         if (locations.isEmpty()) {
@@ -135,6 +138,7 @@ public class TeleportPlayers {
             return;
         }
 
+        // Teleport the player
         teleportPlayersToRandomLocations(players, locations);
     }
 }

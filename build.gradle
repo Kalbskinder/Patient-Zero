@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'me.kalbskinder'
-version = '1.2.0'
+version = '1.0.1'
 
 repositories {
     mavenCentral()
@@ -20,6 +20,8 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    implementation "net.kyori:adventure-text-minimessage:4.22.0"
+
 }
 
 tasks {

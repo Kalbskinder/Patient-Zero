@@ -4,6 +4,7 @@ import me.kalbskinder.patientZero.PatientZero;
 import me.kalbskinder.patientZero.enums.GameState;
 import me.kalbskinder.patientZero.systems.Queue;
 import me.kalbskinder.patientZero.systems.QueueManager;
+import me.kalbskinder.patientZero.utils.MMUtils;
 import me.kalbskinder.patientZero.utils.Prefixes;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -12,7 +13,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 public class JoinLeaveCommand {
     private static String prefix = Prefixes.getPrefix();
@@ -43,13 +43,13 @@ public class JoinLeaveCommand {
                 if (Queue.canPlayerJoinQueue(player, mapName, plugin)) { // Check if the player is able to join the queue
                     player.teleport(loc); // Teleport the player to the defined location
                     QueueManager.addToQueue(mapName, player); // Add the player to the queue
-                    player.sendMessage(customPrefix + updateJoinLeaveMessages(joinMessage, customPrefix, player, plugin, false));
+                    MMUtils.sendMessage(player, customPrefix + updateJoinLeaveMessages(joinMessage, customPrefix, player, plugin, false));
                 }
             } else {
-                player.sendMessage(prefix + "§cWorld '" + data.get(0) + "' was not found.");
+                MMUtils.sendMessage(player, prefix + "<red>World '" + data.get(0) + "' was not found.");
             }
         } else {
-            player.sendMessage(prefix + "§cMap not found or no spawn point registered. Use '/ptz setqueue-spawn <map-name>'");
+            MMUtils.sendMessage(player, prefix + "<red>Map not found or no spawn point registered. Use '/ptz setqueue-spawn <map-name>'");
         }
     }
 
@@ -69,15 +69,17 @@ public class JoinLeaveCommand {
             String customPrefix = Prefixes.getCustomPrefix();
             String leaveMessage = config.getString("messages.playerleave", "You left the queue");
 
+            // Replace placeholders in the leave message
             String updatedLeaveMessage = updateJoinLeaveMessages(leaveMessage, customPrefix, player, plugin, true);
 
             if(QueueManager.removePlayerFromAnyQueue(player)) {
-                player.sendMessage(customPrefix + updatedLeaveMessage);
+                MMUtils.sendMessage(player, customPrefix + updatedLeaveMessage);
                 player.performCommand(executeCommand);
             } else {
-                player.sendMessage(customPrefix + "§cUnable to leave queue.");
+                MMUtils.sendMessage(player, customPrefix + "<red>Unable to leave queue.");
             }
         } else {
+            // Remove player from queue without notifying others
             QueueManager.removePlayerFromAnyQueue(player);
             player.performCommand(executeCommand);
         }
@@ -117,14 +119,14 @@ public class JoinLeaveCommand {
             queue.forEach(p -> {
                 // Don't display the message for the player who left
                 if (!p.getName().equals(playerName)) {
-                    p.sendMessage(customPrefix + broadcastPlayerLeaveMessage);
+                    MMUtils.sendMessage(p, customPrefix + broadcastPlayerLeaveMessage);
                 }
             });
         } else {
             queue.forEach(p -> {
                 // Don't display the message for the player who left
                 if(!p.getName().equals(playerName)) {
-                    p.sendMessage(customPrefix + broadcastPlayerJoinMessage);
+                    MMUtils.sendMessage(p, customPrefix + broadcastPlayerJoinMessage);
                 }
             });
         }

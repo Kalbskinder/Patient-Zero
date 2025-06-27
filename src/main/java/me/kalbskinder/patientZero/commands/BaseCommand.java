@@ -2,7 +2,7 @@ package me.kalbskinder.patientZero.commands;
 
 import me.kalbskinder.patientZero.PatientZero;
 import me.kalbskinder.patientZero.systems.Queue;
-import me.kalbskinder.patientZero.systems.QueueManager;
+import me.kalbskinder.patientZero.utils.MMUtils;
 import me.kalbskinder.patientZero.utils.Prefixes;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
@@ -12,8 +12,8 @@ import org.bukkit.entity.Player;
 
 
 public class BaseCommand implements CommandExecutor {
-    private PatientZero plugin;
-    private static String prefix = Prefixes.getPrefix();
+    private final PatientZero plugin;
+    private static final String prefix = Prefixes.getPrefix();
 
     // Get the plugin instance
     public BaseCommand(PatientZero plugin) {
@@ -23,7 +23,8 @@ public class BaseCommand implements CommandExecutor {
 
     // Send a message to the player when the executed command was not correct.
     public static void sendCorrectUsage(Player player, String usage) {
-        player.sendMessage(prefix + "§cCorrect usage: " + usage);
+        String message = prefix + "<red>Correct usage: <reset>" + usage;
+        MMUtils.sendMessage(player, usage);
     }
 
 
@@ -35,7 +36,7 @@ public class BaseCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String s, String[] args) {
         // Command can only be executed by players
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(prefix + "§cOnly players can execute this command.");
+            MMUtils.sendMessage((Player) sender, prefix + "<red>Only players can execute this command.<reset>");
             return true;
         }
 
@@ -44,7 +45,7 @@ public class BaseCommand implements CommandExecutor {
             if (!playerHasPermission("ptz.admin", player)) {
                 return true;
             }
-            player.sendMessage(prefix + "§7 Use §e/ptz help §7 for a list of commands.");
+            MMUtils.sendMessage(player, prefix + "<gray>Use <yellow>/ptz help <gray>for a list of commands.<reset>");
             return true;
         }
 
@@ -58,16 +59,16 @@ public class BaseCommand implements CommandExecutor {
                 }
 
                 // TODO: Add hover effect that shows what the command is used for
-                player.sendMessage(prefix + "§aAvailable commands:");
-                player.sendMessage("§7- §e/ptz §6createmap §7<map-name> <x1> <y1> <z1> <x2> <y2> <z2>");
-                player.sendMessage("§7- §e/ptz §6deletemap §7<map-name>");
-                player.sendMessage("§7- §e/ptz §6addspawn §7<map-name> <role>");
-                player.sendMessage("§7- §e/ptz §6setqueue-spawn §7<map-name>");
-                player.sendMessage("§7- §e/ptz §6setqueue-limit §7<map-name> <int-limit>");
-                player.sendMessage("§7- §e/ptz §6listmaps");
-                player.sendMessage("§f");
-                player.sendMessage("§7- §e/ptz §6join §7<map-name>");
-                player.sendMessage("§7- §e/ptz §6leave");
+                MMUtils.sendMessage(player, prefix + "<green>Available commands:<reset>");
+                MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>createmap <gray><map-name> <x1> <y1> <z1> <x2> <y2> <z2>");
+                MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>deletemap <gray><map-name>");
+                MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>addspawn <gray><map-name> <role>");
+                MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>setqueue-spawn <gray><map-name>");
+                MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>setqueue-limit <gray><map-name> <int-limit>");
+                MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>listmaps");
+                MMUtils.sendMessage(player, "");
+                MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>join <gray><map-name>");
+                MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>leave");
             }
 
             // Create-map command
@@ -78,7 +79,7 @@ public class BaseCommand implements CommandExecutor {
                 }
 
                 if (args.length != 8) {
-                    sendCorrectUsage(player, "§e/ptz §6createmap §7<map-name> <x1> <y1> <z1> <x2> <y2> <z2>");
+                    sendCorrectUsage(player, "<yellow>/ptz <gold>createmap <gray><map-name> <x1> <y1> <z1> <x2> <y2> <z2>");
                     return true;
                 }
 
@@ -93,7 +94,7 @@ public class BaseCommand implements CommandExecutor {
                 }
 
                 if (args.length != 1) {
-                    sendCorrectUsage(player, "§e/ptz listmaps");
+                    sendCorrectUsage(player, "<yellow>/ptz listmaps");
                 }
 
                 ListCommands.listMaps(sender, args, player, plugin);
@@ -107,7 +108,7 @@ public class BaseCommand implements CommandExecutor {
                 }
 
                 if (args.length != 2) {
-                    sendCorrectUsage(player, "§e/ptz §6deletemap §7<map-name>");
+                    sendCorrectUsage(player, "<yellow>/ptz <gold>deletemap <gray><map-name>");
                     return true;
                 }
 
@@ -124,13 +125,13 @@ public class BaseCommand implements CommandExecutor {
                 }
 
                 if (args.length != 3) {
-                    sendCorrectUsage(player, "§e/ptz §6addspawn §7 <map-name> <role>");
-                    player.sendMessage(prefix + "§6§lTIP! §rYou can set multiple spawn locations for a role.");
+                    sendCorrectUsage(player, "<yellow>/ptz <gold>addspawn <gray> <map-name> <role>");
+                    MMUtils.sendMessage(player, prefix + "<gold><b>TIP! <reset>You can set multiple spawn locations for a role.");
                     return true;
                 }
 
                 if (!args[2].equalsIgnoreCase("corrupted") && !args[2].equalsIgnoreCase("survivor")) {
-                    player.sendMessage(prefix + "§c<role> has to be \"corrupted\" or \"survivor\".");
+                    MMUtils.sendMessage(player, prefix + "<red><role> has to be \"corrupted\" or \"survivor\".");
                     return true;
                 }
 
@@ -147,7 +148,7 @@ public class BaseCommand implements CommandExecutor {
                 }
 
                 if (args.length != 2) {
-                    sendCorrectUsage(player, "§e/ptz §setqueue-spawn §7<map-name>");
+                    sendCorrectUsage(player, "<yellow>/ptz <gold>setqueue-spawn <gray><map-name>");
                     return true;
                 }
 
@@ -160,7 +161,7 @@ public class BaseCommand implements CommandExecutor {
                 }
 
                 if (args.length != 3) {
-                    sendCorrectUsage(player, "§e/ptz §6setqueue-limit §7<map-name> <int-limit>");
+                    sendCorrectUsage(player, "<yellow>/ptz <gold>setqueue-limit <gray><map-name> <int-limit>");
                     return true;
                 }
 
@@ -175,7 +176,7 @@ public class BaseCommand implements CommandExecutor {
                 }
 
                 if (args.length != 2) {
-                    sendCorrectUsage(player, "§e/ptz §6join §7<map-name>");
+                    sendCorrectUsage(player, "<yellow>/ptz <gold>join <gray><map-name>");
                     return true;
                 }
 
@@ -190,39 +191,29 @@ public class BaseCommand implements CommandExecutor {
                 }
 
                 if (args.length != 1) {
-                    sendCorrectUsage(player, "§e/ptz leave");
+                    sendCorrectUsage(player, "<yellow>/ptz leave");
                 }
 
                 JoinLeaveCommand.leaveMap(player, plugin);
             }
 
-            case "reset" -> {
-                QueueManager.getQueue("test");
-            }
-
             // Default response if no match was found
             default -> {
-                player.sendMessage(prefix + "§cUnknown subcommand. Use §e/ptz help §cfor a list of commands.");
+                MMUtils.sendMessage(player, prefix + "<red>Unknown subcommand. Use <yellow>/ptz help <red>for a list of commands.");
             }
         }
 
         return true;
     }
 
-    /**
-     * Checks if a player has the required permission or is an admin.
-     * Sends an error message if not.
-     *
-     * @param permission The required permission node.
-     * @param player The player to check for
-     * @return true if the player has permission, false otherwise.
-     */
+    // Checks if a player has the required permission or is an admin.
+    // Sends an error message if not.
     private boolean playerHasPermission(String permission, Player player) {
         if (player.hasPermission(permission)) {
             return true;
         } else {
             player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_LAND, 1.0f, 1.0f);
-            player.sendMessage(prefix + "§cYou don't have permission to use this command!");
+            MMUtils.sendMessage(player, prefix + "<red>You don't have permission to use this command!");
             return false;
         }
     }

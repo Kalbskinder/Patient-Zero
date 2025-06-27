@@ -1,10 +1,12 @@
 package me.kalbskinder.patientZero.utils;
 
 import me.kalbskinder.patientZero.PatientZero;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -17,17 +19,9 @@ import java.util.stream.Collectors;
 public class ItemMaker {
     private static final Logger logger = Logger.getLogger("PTZ");
     private static final NamespacedKey ACTION_KEY = new NamespacedKey(PatientZero.getPlugin(PatientZero.class), "item_action");
+    private static final MiniMessage mm = MiniMessage.miniMessage();
 
-    /**
-     * Creates an ItemStack with the specified properties and optional right-click action.
-     *
-     * @param item     The material identifier (e.g., "minecraft:cobblestone").
-     * @param amount   The quantity of the item.
-     * @param itemName The display name of the item (supports color codes with &).
-     * @param lore     The lore lines for the item (supports color codes with &).
-     * @param actionId A unique identifier for the right-click action (null if no action).
-     * @return The configured ItemStack, or null if the material is invalid.
-     */
+    // Creates an ItemStack with the specified properties and optional right-click action.
     public static ItemStack createItem(String item, int amount, String itemName, List<String> lore, String actionId) {
 
         // Validate input
@@ -59,15 +53,17 @@ public class ItemMaker {
 
         // Set display name
         if (itemName != null && !itemName.trim().isEmpty()) {
-            meta.setDisplayName(itemName);
+            meta.displayName(mm.deserialize(itemName));
         }
 
         // Set lore
         if (lore != null && !lore.isEmpty()) {
-            List<String> coloredLore = lore.stream()
+            List<Component> loreComponents = lore.stream()
                     .filter(Objects::nonNull)
+                    .map(mm::deserialize)
                     .collect(Collectors.toList());
-            meta.setLore(coloredLore);
+
+            meta.lore(loreComponents);
         }
 
         // Set action identifier
@@ -77,19 +73,14 @@ public class ItemMaker {
 
         // Make item not lose durability
         meta.setUnbreakable(true);
+        meta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
 
         // Apply meta
         itemStack.setItemMeta(meta);
         return itemStack;
     }
 
-    /**
-     * Gives the item to a player in the specified inventory slot.
-     *
-     * @param player The player to receive the item.
-     * @param item   The ItemStack to give.
-     * @param slot   The inventory slot (0-35 for main inventory, 36-39 for armor, 40 for off-hand).
-     */
+    // Gives the item to a player in the specified inventory slot.
     public static void giveItemToPlayer(Player player, ItemStack item, int slot) {
         if (player == null || !player.isOnline()) {
             logger.warning("Cannot give item to null or offline player");
@@ -134,12 +125,7 @@ public class ItemMaker {
         player.updateInventory(); // Update the inventory changes
     }
 
-    /**
-     * Gets the action identifier from an ItemStack.
-     *
-     * @param item The ItemStack to check.
-     * @return The action identifier, or null if none.
-     */
+    // Gets the action identifier from an ItemStack.
     public static String getActionId(ItemStack item) {
         if (item == null || !item.hasItemMeta()) {
             return null;

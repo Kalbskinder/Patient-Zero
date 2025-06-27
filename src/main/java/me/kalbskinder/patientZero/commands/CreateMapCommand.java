@@ -1,6 +1,7 @@
 package me.kalbskinder.patientZero.commands;
 
 import me.kalbskinder.patientZero.PatientZero;
+import me.kalbskinder.patientZero.utils.MMUtils;
 import me.kalbskinder.patientZero.utils.Prefixes;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -12,6 +13,13 @@ public class CreateMapCommand {
     public static void createMap(CommandSender sender, String[] args, Player player, PatientZero plugin) {
         String prefix = Prefixes.getPrefix();
         String mapName = args[1];
+        FileConfiguration config = plugin.getConfig();
+
+        // Check if a map with this name already exists
+        if (config.contains("maps." + mapName)) {
+            MMUtils.sendMessage(player, prefix + "<red>A map with this name already exists!");
+            return;
+        }
 
         try {
             // Parse coordinates
@@ -22,7 +30,6 @@ public class CreateMapCommand {
             double y2 = Double.parseDouble(args[6]);
             double z2 = Double.parseDouble(args[7]);
 
-            FileConfiguration config = plugin.getConfig();
             String basePath = "maps." + mapName;
 
             // Save map data
@@ -37,10 +44,10 @@ public class CreateMapCommand {
             plugin.saveConfig();
 
             // Send a confirmation message
-            sender.sendMessage(prefix + "§aMap '" + mapName + "' has been created successfully!");
+            MMUtils.sendMessage(player, prefix + "<green>Map '" + mapName + "' has been created successfully!");
 
         } catch (NumberFormatException e) {
-            sender.sendMessage(prefix + "§cCoordinates must be valid numbers.");
+            MMUtils.sendMessage(player, prefix + "<red>Coordinates must be valid numbers.");
         }
     }
 }

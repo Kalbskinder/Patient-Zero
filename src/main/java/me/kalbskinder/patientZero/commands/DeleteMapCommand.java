@@ -1,6 +1,7 @@
 package me.kalbskinder.patientZero.commands;
 
 import me.kalbskinder.patientZero.PatientZero;
+import me.kalbskinder.patientZero.utils.MMUtils;
 import me.kalbskinder.patientZero.utils.Prefixes;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -18,9 +19,9 @@ public class DeleteMapCommand {
         if (config.contains(path)) {
             config.set(path, null); // Delete the map section
             plugin.saveConfig();
-            sender.sendMessage(prefix + "§aMap §e" + mapName + " §ahas been deleted.");
+            MMUtils.sendMessage(player, prefix + "<green>Map <yellow>" + mapName + " <green>has been deleted.");
         } else {
-            sender.sendMessage(prefix + "§cMap §e" + mapName + " §cwas not found.");
+            MMUtils.sendMessage(player, prefix + "<red>Map <yellow>" + mapName + " <red>was not found.");
         }
     }
 }

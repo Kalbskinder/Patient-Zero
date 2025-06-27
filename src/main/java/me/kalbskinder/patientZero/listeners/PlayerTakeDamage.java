@@ -9,7 +9,7 @@ import me.kalbskinder.patientZero.systems.QueueManager;
 import me.kalbskinder.patientZero.systems.TeleportPlayers;
 import me.kalbskinder.patientZero.systems.scoreboard.GameSessionStats;
 import me.kalbskinder.patientZero.systems.scoreboard.ScoreboardSessionManager;
-import me.kalbskinder.patientZero.utils.PlayerTitle;
+import me.kalbskinder.patientZero.utils.MMUtils;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -97,9 +97,9 @@ public class PlayerTakeDamage implements Listener {
                         }
 
                         // Display player a title
-                        String title = config.getString("titles.roles.final-death.title", "§cYou died!");
-                        String subtitle = config.getString("titles.roles.final-death.subtitle", "§eYou can't respawn anymore!");
-                        PlayerTitle.displayPlayerTitle(victim, title, subtitle, 1f, 3f, 1f);
+                        String title = config.getString("titles.roles.final-death.title", "<red>You died!");
+                        String subtitle = config.getString("titles.roles.final-death.subtitle", "<yellow>You can't respawn anymore!");
+                        MMUtils.displayTitle(victim, title, subtitle, 1f, 3f, 1f);
                         victim.performCommand(config.getString("settings.executes.playerOnFinalDeath", "/me Teleport me!").substring(1));
                         // TODO: Add a sound
                     }
@@ -117,14 +117,14 @@ public class PlayerTakeDamage implements Listener {
                             return;
                         }
 
-                        String title = config.getString("titles.roles.final-death.title", "§cYou died!");
-                        PlayerTitle.displayPlayerTitle(victim, title, "", 1f, 3f, 1f);
+                        String title = config.getString("titles.roles.final-death.title", "<red>You died!");
+                        MMUtils.displayTitle(victim, title, "", 1f, 3f, 1f);
                         victim.performCommand(config.getString("settings.executes.playerOnFinalDeath", "/me Teleport me!").substring(1));
 
                         // Read message from the config and notify players
                         queue.getPlayers().forEach(player -> {
-                            player.sendMessage(config.getString("messages.ptz-dead", "§c§lPatient-Zero died! §r§cIt was %player%").replace("%player%", victim.getName()));
-                            player.sendMessage(config.getString("message.ptz-dead-info", "§eCorrupted players will no longer respawn!").replace("%player%", victim.getName()));
+                            MMUtils.sendMessage(player, config.getString("messages.ptz-dead", "<red><bold>Patient-Zero died! <reset><red>It was %player%").replace("%player%", victim.getName()));
+                            MMUtils.sendMessage(player, config.getString("message.ptz-dead-info", "<yellow>Corrupted players will no longer respawn!").replace("%player%", victim.getName()));
                             player.playSound(player.getLocation(), Sound.ENTITY_BAT_DEATH, 0.8f, 0.8f);
                         });
 
@@ -266,10 +266,10 @@ public class PlayerTakeDamage implements Listener {
 
                 // Display the player the time he has left until he respawns
                 if (timeLeft <= 5 && timeLeft > 0) {
-                    String title = config.getString("titles.roles.corrupted-respawn.title", "§cYou died!");
-                    String subtitle = config.getString("titles.roles.corrupted-respawn.subtitle", "§eRespawning in §c%time%s§e!").replace("%time%", String.valueOf(timeLeft));
+                    String title = config.getString("titles.roles.corrupted-respawn.title", "<red>You died!");
+                    String subtitle = config.getString("titles.roles.corrupted-respawn.subtitle", "<yellow>Respawning in <red>%time%s<yellow>!").replace("%time%", String.valueOf(timeLeft));
 
-                    PlayerTitle.displayPlayerTitle(player, title, subtitle, 0f, 1f, 0.3f); // Display the player the title
+                    MMUtils.displayTitle(player, title, subtitle, 0f, 1f, 0.3f); // Display the player the title
                     player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 1f);
                 }
                 timeLeft--;

@@ -7,10 +7,8 @@ import me.kalbskinder.patientZero.listeners.PlayerTakeDamage;
 import me.kalbskinder.patientZero.systems.scoreboard.GameSessionStats;
 import me.kalbskinder.patientZero.systems.scoreboard.ScoreboardSessionManager;
 import me.kalbskinder.patientZero.systems.scoreboard.ScoreboardUpdater;
-import me.kalbskinder.patientZero.utils.ItemActionHandler;
-import me.kalbskinder.patientZero.utils.ItemMaker;
-import me.kalbskinder.patientZero.utils.PlayerTitle;
-import me.kalbskinder.patientZero.utils.Prefixes;
+import me.kalbskinder.patientZero.utils.*;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Color;
 import org.bukkit.GameMode;
 import org.bukkit.Particle;
@@ -97,9 +95,9 @@ public class QueueManager {
                 queue.setCountingDown(false); // Stop the countdown
                 queue.setCountdownTask(null);
                 queue.setState(GameState.WAITING); // Set mode back to waiting
-                queue.getPlayers().forEach(p -> p.sendMessage(
-                        customPrefix + "§cWe don't have enough players! Start canceled.") // Notify other players
-                );
+                queue.getPlayers().forEach(p -> {
+                    MMUtils.sendMessage(p, customPrefix + "<red>We don't have enough players! Start canceled.");
+                });
             } else if (queue.getState() == GameState.INGAME) {
 
                 // Check if there's enough players of a role to continue the game
@@ -120,7 +118,7 @@ public class QueueManager {
 
                     // Send each player a message
                     queue.getPlayers().forEach(p -> {
-                        p.sendMessage("§eThe last " + role + " §eleft the game!");
+                        MMUtils.sendMessage(p, customPrefix + "<yellow>The last " + role + " <yellow> left the game!");
                     });
                     gameEnd(queue, map);
                 } else if (!PlayerTakeDamage.isRoleAlive(map, PlayerRole.CORRUPTED)) {
@@ -129,7 +127,7 @@ public class QueueManager {
                     // Send each player a message
                     String role = plugin.getConfig().getString("roles.corrupted");
                     queue.getPlayers().forEach(p -> {
-                        p.sendMessage("§eThe last " + role + " §eleft the game!");
+                        MMUtils.sendMessage(p, "<yellow>The last " + role + " <yellow>left the game!");
                     });
 
                     gameEnd(queue, map);
@@ -139,7 +137,7 @@ public class QueueManager {
                     queue.setGameWinners(PlayerRole.SURVIVOR);
 
                     queue.getPlayers().forEach(p -> {
-                        p.sendMessage("§eAll corrupted players have been eliminated!");
+                        MMUtils.sendMessage(p, customPrefix + "<yellow>All corrupted players have been eliminated!");
                     });
 
                     gameEnd(queue, map);
@@ -197,13 +195,13 @@ public class QueueManager {
         // Read countdown message from config
         String countdownMessage = plugin.getConfig().getString(
                 "messages.gamestart",
-                "§eGame starts in %time%§es"
+                "<yellow>Game starts in %time%<yellow>s"
         );
 
         queue.setState(GameState.COUNTDOWN); // Set map state to counting down
 
         BukkitTask task = new BukkitRunnable() {
-            int timeLeft = 10; // TODO: Change back to 30 after testing is done
+            int timeLeft = 30;
 
             @Override
             public void run() {
@@ -214,7 +212,7 @@ public class QueueManager {
                     cancel(); // Cancel runnable
 
                     // Notify other players
-                    queue.getPlayers().forEach(p -> p.sendMessage(customPrefix + "§cWe don't have enough players! Start canceled."));
+                    queue.getPlayers().forEach(p -> MMUtils.sendMessage(p, customPrefix + "<red>We don't have enough players! Start canceled."));
                     return;
                 }
 
@@ -223,7 +221,7 @@ public class QueueManager {
                     queue.getPlayers().forEach(p -> {
                         p.getInventory().clear(); // Clear inventory
                         p.setGameMode(GameMode.SURVIVAL); // Set game mode to survival
-                        p.sendMessage(customPrefix + "§eGame is starting");
+                        MMUtils.sendMessage(p, customPrefix + "<yellow>Game is starting");
                         gameStartCountdown(mapName, p);
                     });
 
@@ -257,16 +255,16 @@ public class QueueManager {
                 if (timeLeft == 30 || timeLeft == 10 || timeLeft == 5 || timeLeft <= 3) {
                     String color;
                     if (timeLeft <= 5) {
-                        color = "§c";
+                        color = "<red>";
                     } else if (timeLeft == 10) {
-                        color = "§6";
+                        color = "<gold>";
                     } else {
-                        color = "§a";
+                        color = "<green>";
                     }
 
                     // Send the player a message with the time remaining
                     queue.getPlayers().forEach(p -> {
-                        p.sendMessage(customPrefix + countdownMessage.replace("%time%", color + timeLeft));
+                        MMUtils.sendMessage(p, customPrefix + countdownMessage.replace("%time%", color + timeLeft));
                         p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 1.0f); // Play a sound to the player
                     });
 
@@ -286,9 +284,9 @@ public class QueueManager {
         // Get the game winners
         String gameWinners;
         if (queue.getGameWinners() == PlayerRole.SURVIVOR) {
-            gameWinners = plugin.getConfig().getString("messages.winners.survivors", "§aSurvivors");
+            gameWinners = plugin.getConfig().getString("messages.winners.survivors", "<green>Survivors");
         } else {
-            gameWinners = plugin.getConfig().getString("messages.winners.ptz", "§cCorrupted §f& §cPatient-Zero");
+            gameWinners = plugin.getConfig().getString("messages.winners.ptz", "<red>Corrupted <reset>& <red>Patient-Zero");
         }
 
 
@@ -309,15 +307,18 @@ public class QueueManager {
 
                         // Send the end message
                         endMessageLines.forEach(line -> {
-                            String finalLine = line.replace("%winners%", gameWinners); // Replace placeholder with real value
+                            String replacedLine = line.replace("%winners%", gameWinners);
                             int kills = stats.getPlayerKills().getOrDefault(p.getUniqueId(), 0);
-                            finalLine = finalLine.replace("%kills%", String.valueOf(kills));
-                            p.sendMessage(finalLine);
+                            replacedLine = replacedLine.replace("%kills%", String.valueOf(kills));
+
+                            Component component = CenterTag.deserializeCentered(replacedLine);
+                            MMUtils.sendMessageAsComponent(p, component); // Send centered message line
                         });
 
-                        String winTitle = plugin.getConfig().getString("titles.win.title", "§aYOU WIN!");
+
+                        String winTitle = plugin.getConfig().getString("titles.win.title", "<green><bold>YOU WIN!<reset>");
                         String winSubtitle = plugin.getConfig().getString("titles.win.subtitle", " ");
-                        String loseTitle = plugin.getConfig().getString("titles.lose.title", "§cYOU LOSE!");
+                        String loseTitle = plugin.getConfig().getString("titles.lose.title", "<red><bold>YOU LOSE!<reset>");
                         String loseSubtitle = plugin.getConfig().getString("titles.lose.subtitle", " ");
 
                         Particle.DustOptions lime = new Particle.DustOptions(Color.LIME, 1.5F);
@@ -326,18 +327,18 @@ public class QueueManager {
 
                         // Display title, play sound & display particles, depending on winning or losing
                         if (queue.getRoles().get(p) == PlayerRole.SURVIVOR && queue.getGameWinners() == PlayerRole.SURVIVOR) {
-                            PlayerTitle.displayPlayerTitle(p, winTitle, winSubtitle, 1f, 3f, 1f);
+                            MMUtils.displayTitle(p, winTitle, winSubtitle, 1f, 3f, 1f);
                             p.playSound(p.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_TWINKLE_FAR, 1.0f, 1.0f);
                             p.spawnParticle(Particle.DUST, p.getLocation().add(0, 0.5, 0), 80, 0.5, 0.5, 0.5, 0, lime);
 
                         } else if ((queue.getRoles().get(p) == PlayerRole.CORRUPTED || queue.getRoles().get(p) == PlayerRole.PATIENT_ZERO) &&
                                 queue.getGameWinners() == PlayerRole.CORRUPTED) {
-                            PlayerTitle.displayPlayerTitle(p, winTitle, winSubtitle, 1f, 3f, 1f);
+                            MMUtils.displayTitle(p, winTitle, winSubtitle, 1f, 3f, 1f);
                             p.playSound(p.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_TWINKLE_FAR, 1.0f, 1.0f);
                             p.spawnParticle(Particle.DUST, p.getLocation().add(0, 0.5, 0), 80, 0.5, 0.5, 0.5, 0, lime);
 
                         } else {
-                            PlayerTitle.displayPlayerTitle(p, loseTitle, loseSubtitle, 1f, 3f, 1f);
+                            MMUtils.displayTitle(p, loseTitle, loseSubtitle, 1f, 3f, 1f);
                             p.playSound(p.getLocation(), Sound.ENTITY_BREEZE_DEATH, 1.0f, 0.8f);
                             p.spawnParticle(Particle.DUST, p.getLocation().add(0, 0.5, 0), 80, 0.5, 0.5, 0.5, 0, red);
                         }
@@ -389,8 +390,8 @@ public class QueueManager {
 
                 if (timeLeft <= 5 && timeLeft > 0) {
                     // Read message from config and send to player
-                    String message = plugin.getConfig().getString("messages.roleassign", "§eRoles are assigned in §c%time%§es");
-                    p.sendMessage(message.replace("%time%", String.valueOf(timeLeft)));
+                    String message = plugin.getConfig().getString("messages.roleassign", "<yellow>Roles are assigned in <red>%time%<yellow>s");
+                    MMUtils.sendMessage(p, message.replace("%time%", String.valueOf(timeLeft)));
                     p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 1.0f); // Play a sound to the player
                 }
                 timeLeft--;
@@ -445,7 +446,7 @@ public class QueueManager {
             String subtitle = config.getString(basepath + ".subtitle");
 
             // Display title
-            PlayerTitle.displayPlayerTitle(p, title, subtitle, 1f, 3f, 1f);
+            MMUtils.displayTitle(p, title, subtitle, 1f, 3f, 1f);
 
             // Apply inventory layout
             ItemDistributor.applyRoleLayout(p, role);

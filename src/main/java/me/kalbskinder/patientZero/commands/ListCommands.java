@@ -1,6 +1,7 @@
 package me.kalbskinder.patientZero.commands;
 
 import me.kalbskinder.patientZero.PatientZero;
+import me.kalbskinder.patientZero.utils.MMUtils;
 import me.kalbskinder.patientZero.utils.Prefixes;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -15,20 +16,20 @@ public class ListCommands {
 
         // Get all keys under 'maps' (map names)
         if (!config.isConfigurationSection("maps")) {
-            sender.sendMessage(prefix + "§eNo maps saved!");
+            MMUtils.sendMessage(player, prefix + "<red>No maps saved!");
             return;
         }
 
         Set<String> mapNames = config.getConfigurationSection("maps").getKeys(false);
 
         if (mapNames.isEmpty()) {
-            sender.sendMessage(prefix + "§eNo maps saved!");
+            MMUtils.sendMessage(player, prefix + "<red>No maps saved!");
             return;
         }
 
-        sender.sendMessage(prefix + "§aSaved maps:");
+        MMUtils.sendMessage(player, prefix + "<green>Saved maps:");
         for (String map : mapNames) {
-            sender.sendMessage("§7- §f" + map);
+            MMUtils.sendMessage(player, "<gray>- <white>" + map);
         }
     }
 }

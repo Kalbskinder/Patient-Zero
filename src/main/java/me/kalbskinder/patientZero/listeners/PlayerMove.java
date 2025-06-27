@@ -3,6 +3,7 @@ package me.kalbskinder.patientZero.listeners;
 import me.kalbskinder.patientZero.enums.GameState;
 import me.kalbskinder.patientZero.systems.QueueManager;
 import me.kalbskinder.patientZero.systems.TeleportPlayers;
+import me.kalbskinder.patientZero.utils.MMUtils;
 import me.kalbskinder.patientZero.utils.PlayerCheck;
 import me.kalbskinder.patientZero.utils.Prefixes;
 import org.bukkit.GameMode;
@@ -52,7 +53,7 @@ public class PlayerMove implements Listener {
             // Don't remove respawning players form queue
             if (player.getGameMode() == GameMode.SPECTATOR) {
                 TeleportPlayers.teleportPlayerToCorruptedLocations(player);
-                player.sendMessage(Prefixes.getCustomPrefix() + "§cYou can't leave this area");
+                MMUtils.sendMessage(player, Prefixes.getCustomPrefix() + "<red>You can't leave this area");
                 return;
             }
 
@@ -60,7 +61,7 @@ public class PlayerMove implements Listener {
 
             // Only send the message if the action happened in game not while ending
             if (gameState == GameState.INGAME) {
-                player.sendMessage(Prefixes.getCustomPrefix() + "§cYou left the map area and were kicked from the game!");
+                MMUtils.sendMessage(player, Prefixes.getCustomPrefix() + "<red>You left the map area and were kicked from the game!");
             }
         }
 

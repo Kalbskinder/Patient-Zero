@@ -1,6 +1,7 @@
 package me.kalbskinder.patientZero.commands;
 
 import me.kalbskinder.patientZero.PatientZero;
+import me.kalbskinder.patientZero.utils.MMUtils;
 import me.kalbskinder.patientZero.utils.Prefixes;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
@@ -40,8 +41,8 @@ public class MapSpawnsCommand {
         plugin.saveConfig();
 
         // Send a chat message to notify the player that the spawnpoint was created succesfully
-        player.sendMessage(prefix + "§aAdded Spawnpoint for " + role + " at:");
-        player.sendMessage(location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ());
+        MMUtils.sendMessage(player, prefix + "<green>Added Spawnpoint for " + role + " at:");
+        MMUtils.sendMessage(player,location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ());
     }
 
     public static void setQueueSpawn(CommandSender sender, String[] args, Player player, PatientZero plugin) {
@@ -50,7 +51,7 @@ public class MapSpawnsCommand {
 
         // Check if map exists
         if (!config.contains("maps." + mapName)) {
-            sender.sendMessage(prefix + "§cMap not found!");
+            MMUtils.sendMessage(player, prefix + "<red>Map not found!");
             return;
         }
 
@@ -70,8 +71,8 @@ public class MapSpawnsCommand {
         config.set("maps." + mapName + ".spawns.queue-spawn", serializedLocation);
         plugin.saveConfig();
 
-        sender.sendMessage(prefix + "§aQueue-Spawn for map §e" + mapName + " §ahas been created.");
-        sender.sendMessage(prefix + "If you get an §cerror §rwhen executing §a'/ptz join " + mapName + "'§r, please §creastart your server§r and try again.");
+        MMUtils.sendMessage(player, prefix + "<green>Added Spawnpoint for " + mapName + " at:");
+        MMUtils.sendMessage(player, prefix + "<white>If you get an <red>error <reset>when executing <green>'/ptz join '" + mapName + "'<reset>, please <red>reastart your server<reset> and try again.");
     }
 
 }

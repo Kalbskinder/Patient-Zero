@@ -3,6 +3,7 @@ package me.kalbskinder.patientZero.listeners;
 import me.kalbskinder.patientZero.PatientZero;
 import me.kalbskinder.patientZero.enums.GameState;
 import me.kalbskinder.patientZero.systems.QueueManager;
+import me.kalbskinder.patientZero.utils.MMUtils;
 import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -24,12 +25,13 @@ public class DoubleJumpListener implements Listener {
 
     private final HashMap<UUID, Long> lastJumpTime = new HashMap<>();
 
+    // Read settings from the config.yml on plugin startup
     public DoubleJumpListener(PatientZero plugin) {
         FileConfiguration config = plugin.getConfig();
         this.isDoubleJumpEnabled = config.getBoolean("settings.double-jump.enabled", false);
         this.velocity = config.getDouble("settings.double-jump.velocity", 0.5);
         this.cooldownSeconds = config.getDouble("settings.double-jump.cooldown", 5);
-        this.cooldownMessage = config.getString("settings.double-jump.cooldown-message", "§cPlease wait %time%s before jumping again.");
+        this.cooldownMessage = config.getString("settings.double-jump.cooldown-message", "<red>Please wait %time%s before jumping again.");
     }
 
     @EventHandler
@@ -38,6 +40,7 @@ public class DoubleJumpListener implements Listener {
 
         if (player.getGameMode() == GameMode.CREATIVE) {
             player.setAllowFlight(true);
+            event.setCancelled(false);
             return;
         }
 
@@ -65,7 +68,7 @@ public class DoubleJumpListener implements Listener {
         // Check cooldown
         if (elapsed < (cooldownSeconds * 1000)) {
             long remaining = (long) Math.ceil((cooldownSeconds * 1000 - elapsed) / 1000.0);
-            player.sendMessage(cooldownMessage.replace("%time%", String.valueOf(remaining)));
+            MMUtils.sendMessage(player, cooldownMessage.replace("%time%", String.valueOf(remaining)));
             return;
         }
 
@@ -84,6 +87,10 @@ public class DoubleJumpListener implements Listener {
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
+
+        if (player.getGameMode() == GameMode.CREATIVE) {
+            player.setAllowFlight(true);
+        }
 
         // Only if the player is in a queue
         if (!QueueManager.isPlayerQueued(player)) return;

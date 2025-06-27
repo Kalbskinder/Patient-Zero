@@ -9,6 +9,8 @@ commands:
   ptz:
     description: Main command
     usage: /ptz <args>
+    aliases: [patient-zero]
+
 
 permissions:
   ptz.join:

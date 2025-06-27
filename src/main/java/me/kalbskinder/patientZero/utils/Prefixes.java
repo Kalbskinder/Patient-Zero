@@ -12,7 +12,7 @@ public class Prefixes {
 
     // Returns the plugins default prefix
     public static String getPrefix() {
-        return "§f[§x§f§2§8§8§0§6p§x§f§6§a§a§2§3t§x§f§b§c§d§4§1z§r] ";
+        return "[<gradient:#ff8112:#ffdf12>ptz<reset>]";
     }
 
     // Returns the prefix saved in the config

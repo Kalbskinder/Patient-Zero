@@ -27,7 +27,8 @@ public class Queue {
 
         config.set("maps." + mapName + ".queue-limit", maxLimit);
         plugin.saveConfig();
-        MMUtils.sendMessage(player, prefix + "<green>Set queue limit to <gold>" + args[2] + "<green> for map <yellow> + " + mapName);
+        MMUtils.sendMessage(player, prefix + "<green>Set queue limit to <gold>" + args[2] + "<green> for map <yellow>" + mapName);
+
     }
 
     // Manages player requests to join a queue

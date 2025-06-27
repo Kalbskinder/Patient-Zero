@@ -24,9 +24,8 @@ public class BaseCommand implements CommandExecutor {
     // Send a message to the player when the executed command was not correct.
     public static void sendCorrectUsage(Player player, String usage) {
         String message = prefix + "<red>Correct usage: <reset>" + usage;
-        MMUtils.sendMessage(player, usage);
+        MMUtils.sendMessage(player, message);
     }
-
 
     /**
      * Executed when the base command '/ptz' is used.

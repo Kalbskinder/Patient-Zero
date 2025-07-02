@@ -90,7 +90,7 @@ public class ScoreboardUpdater {
         int survivors = stats.getSurvivorsCount();
         int corrupted = stats.getCorruptedCount();
         String timer = formatSeconds(stats.getTimer());
-        int kills = stats.getPlayerKills().getOrDefault(player, 0);
+        int kills = stats.getPlayerKills().getOrDefault(player.getUniqueId(), 0);
         String map = QueueManager.getMapOfPlayer(player);
 
         if (lines.isEmpty()) {

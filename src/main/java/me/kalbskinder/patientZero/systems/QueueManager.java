@@ -242,7 +242,7 @@ public class QueueManager {
                     // Set each players role to survivor and set kills to 0
                     for (Player p : queue.getPlayers()) {
                         stats.getPlayerRoles().put(p, PlayerRole.SURVIVOR);
-                        stats.getPlayerKills().put(p, 0);
+                        stats.getPlayerKills().put(p.getUniqueId(), 0);
                     }
 
                     ScoreboardUpdater.startUpdater(mapName);

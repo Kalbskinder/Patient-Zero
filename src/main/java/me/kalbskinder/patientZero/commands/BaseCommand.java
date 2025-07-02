@@ -27,6 +27,7 @@ public class BaseCommand implements CommandExecutor {
         MMUtils.sendMessage(player, message);
     }
 
+
     /**
      * Executed when the base command '/ptz' is used.
      * Handles subcommands like help, createmap, deletemap, listmaps, join, and leave.
@@ -57,7 +58,6 @@ public class BaseCommand implements CommandExecutor {
                     return true;
                 }
 
-                // TODO: Add hover effect that shows what the command is used for
                 MMUtils.sendMessage(player, prefix + "<green>Available commands:<reset>");
                 MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>createmap <gray><map-name> <x1> <y1> <z1> <x2> <y2> <z2>");
                 MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>deletemap <gray><map-name>");

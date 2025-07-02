@@ -78,8 +78,8 @@ public class PlayerTakeDamage implements Listener {
 
                     if (victimRole == PlayerRole.CORRUPTED && shooterRole == PlayerRole.SURVIVOR) {
                         // Update the kill counter
-                        int currentKills = stats.getPlayerKills().getOrDefault(shooter, 0);
-                        stats.getPlayerKills().put(shooter, currentKills + 1);
+                        int currentKills = stats.getPlayerKills().getOrDefault(shooter.getUniqueId(), 0);
+                        stats.getPlayerKills().put(shooter.getUniqueId(), currentKills + 1);
 
                         if (isRoleAlive(mapName, PlayerRole.PATIENT_ZERO)) {
                             corruptedRespawn(victim); // Start respawn cycle
@@ -101,14 +101,13 @@ public class PlayerTakeDamage implements Listener {
                         String subtitle = config.getString("titles.roles.final-death.subtitle", "<yellow>You can't respawn anymore!");
                         MMUtils.displayTitle(victim, title, subtitle, 1f, 3f, 1f);
                         victim.performCommand(config.getString("settings.executes.playerOnFinalDeath", "/me Teleport me!").substring(1));
-                        // TODO: Add a sound
                     }
 
                     // Only survivors can damage the patient-zero
                     if (victimRole == PlayerRole.PATIENT_ZERO && shooterRole == PlayerRole.SURVIVOR) {
                         // Update the kill counter
-                        int currentKills = stats.getPlayerKills().getOrDefault(shooter, 0);
-                        stats.getPlayerKills().put(shooter, currentKills + 1);
+                        int currentKills = stats.getPlayerKills().getOrDefault(shooter.getUniqueId(), 0);
+                        stats.getPlayerKills().put(shooter.getUniqueId(), currentKills + 1);
 
                         // Check if there's any corrupted alive, else survivors win
                         if (!isRoleAlive(mapName, PlayerRole.CORRUPTED)) {
@@ -197,8 +196,8 @@ public class PlayerTakeDamage implements Listener {
 
                     // Update the kill counter
                     GameSessionStats stats = ScoreboardSessionManager.getSession(mapName);
-                    int currentKills = stats.getPlayerKills().getOrDefault(damager, 0);
-                    stats.getPlayerKills().put((Player) damager, currentKills + 1);
+                    int currentKills = stats.getPlayerKills().getOrDefault(damager.getUniqueId(), 0);
+                    stats.getPlayerKills().put(damager.getUniqueId(), currentKills + 1);
 
                     playerRoles.put(victim, PlayerRole.CORRUPTED); // Update the players role
 

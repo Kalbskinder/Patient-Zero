@@ -1,5 +1,5 @@
 name: Patient-Zero
-version: '1.0.0'
+version: '1.0.3'
 main: me.kalbskinder.patientZero.PatientZero
 description: A plugin that adds a new game mode called Patient-Zero
 api-version: '1.21'

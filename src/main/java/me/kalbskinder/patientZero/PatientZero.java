@@ -44,8 +44,8 @@ public final class PatientZero extends JavaPlugin {
         Logger logger = Logger.getLogger("PTZ");
         logger.info("-------------------------------");
         logger.info("        PTZ - Patient Zero       ");
-        logger.info("       Version: " + getDescription().getVersion());
-        logger.info("       Author: " + getDescription().getAuthors().getFirst());
+        logger.info("       Version: " + getPluginMeta().getVersion());
+        logger.info("       Author: " + getPluginMeta().getAuthors().getFirst());
         logger.info("--------------------------------");
     }
 

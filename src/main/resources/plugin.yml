@@ -1,15 +1,9 @@
 name: Patient-Zero
-version: '1.0.4'
-main: me.kalbskinder.patientZero.PatientZero
+version: '1.0.5'
+main: net.kalbskinder.patientZero.PatientZero
 description: A plugin that adds a new game mode called Patient-Zero
-api-version: '1.21'
+api-version: '26.1'
 author: Kalbskinder
-
-commands:
-  ptz:
-    description: Main command
-    usage: /ptz <args>
-    aliases: [patient-zero]
 
 
 permissions:

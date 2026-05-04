@@ -53,7 +53,11 @@ public class ItemMaker {
 
         // Set display name
         if (itemName != null && !itemName.trim().isEmpty()) {
-            meta.displayName(mm.deserialize(itemName));
+            if (itemName.contains("<italic>")) {
+                meta.displayName(mm.deserialize(itemName));
+            } else {
+                meta.displayName(mm.deserialize("<!italic>" + itemName));
+            }
         }
 
         // Set lore

@@ -99,6 +99,7 @@ scoreboard:
     - "Kills: <green>%kills%"
     - "<yellow> "
     - "Map: <green>%map%"
+
 settings:
   # The time a game takes in seconds
   gametime: 120

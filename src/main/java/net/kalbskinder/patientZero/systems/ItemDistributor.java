@@ -1,5 +1,7 @@
 package net.kalbskinder.patientZero.systems;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.kalbskinder.patientZero.PatientZero;
 import net.kalbskinder.patientZero.enums.PlayerRole;
 import net.kalbskinder.patientZero.utils.ItemMaker;
@@ -12,28 +14,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ItemDistributor {
-    public static FileConfiguration config;
+    private final ItemMaker itemMaker;
 
-    private static List<String> emptyLore = new ArrayList<String>();
+    private final ItemStack survivorBow;
+    private final ItemStack survivorArrow;
 
-    private static ItemStack survivorBow;
-    private static ItemStack survivorArrow;
+    @Getter private final ItemStack corruptedSword;
+    private final ItemStack corruptedHelmet;
+    private final ItemStack corruptedLeggings;
+    private final ItemStack corruptedBoots;
 
-    private static ItemStack corruptedSword;
-    private static ItemStack corruptedHelmet;
-    private static ItemStack corruptedLeggings;
-    private static ItemStack corruptedBoots;
-
-    private static ItemStack patientzeroBow;
-    private static ItemStack patientZeroSword;
+    private final ItemStack patientzeroBow;
+    @Getter private final ItemStack patientZeroSword;
 
     // Get all items from the config
-    public static void register(PatientZero plugin) {
-        config = plugin.getConfig();
+    public ItemDistributor(PatientZero plugin, ItemMaker itemMaker) {
+        this.itemMaker = itemMaker;
+
+        FileConfiguration config = plugin.getConfig();
+        List<String> emptyLore = new ArrayList<>();
 
         // Read the items from the config for each role
         // Survivors
-        survivorBow = ItemMaker.createItem(
+        survivorBow = itemMaker.createItem(
                 "minecraft:bow",
                 1,
                 config.getString("settings.game-items.survivor.bow.name"),
@@ -41,7 +44,7 @@ public class ItemDistributor {
                 ""
         );
 
-        survivorArrow = ItemMaker.createItem(
+        survivorArrow = itemMaker.createItem(
                 "minecraft:arrow",
                 config.getInt("settings.game-items.survivor.arrows.amount"),
                 config.getString("settings.game-items.survivor.arrows.name"),
@@ -50,7 +53,7 @@ public class ItemDistributor {
         );
 
         // Corrupted
-        corruptedSword = ItemMaker.createItem(
+        corruptedSword = itemMaker.createItem(
                 config.getString("settings.game-items.corrupted.sword.type"),
                 1,
                 config.getString("settings.game-items.corrupted.sword.name"),
@@ -58,7 +61,7 @@ public class ItemDistributor {
                 ""
         );
 
-        corruptedHelmet = ItemMaker.createItem(
+        corruptedHelmet = itemMaker.createItem(
                 config.getString("settings.game-items.corrupted.armor.helmet.type"),
                 1,
                 config.getString("settings.game-items.corrupted.armor.helmet.name"),
@@ -66,7 +69,7 @@ public class ItemDistributor {
                 ""
         );
 
-        corruptedLeggings = ItemMaker.createItem(
+        corruptedLeggings = itemMaker.createItem(
                 config.getString("settings.game-items.corrupted.armor.leggings.type"),
                 1,
                 config.getString("settings.game-items.corrupted.armor.leggings.name"),
@@ -74,7 +77,7 @@ public class ItemDistributor {
                 ""
         );
 
-        corruptedBoots = ItemMaker.createItem(
+        corruptedBoots = itemMaker.createItem(
                 config.getString("settings.game-items.corrupted.armor.boots.type"),
                 1,
                 config.getString("settings.game-items.corrupted.armor.boots.name"),
@@ -83,7 +86,7 @@ public class ItemDistributor {
         );
 
         // Patient-Zero
-        patientzeroBow = ItemMaker.createItem(
+        patientzeroBow = itemMaker.createItem(
                 "minecraft:bow",
                 1,
                 config.getString("settings.game-items.patientzero.bow.name"),
@@ -91,7 +94,7 @@ public class ItemDistributor {
                 ""
         );
 
-        patientZeroSword = ItemMaker.createItem(
+        patientZeroSword = itemMaker.createItem(
                 config.getString("settings.game-items.patientzero.sword.type"),
                 1,
                 config.getString("settings.game-items.patientzero.sword.name"),
@@ -101,37 +104,29 @@ public class ItemDistributor {
     }
 
     // Give each role their items
-    public static void applyRoleLayout(Player player, PlayerRole role) {
+    public void applyRoleLayout(Player player, PlayerRole role) {
         Inventory inventory = player.getInventory();
         inventory.clear();
 
         if (role == PlayerRole.SURVIVOR) {
-            ItemMaker.giveItemToPlayer(player, survivorBow, 0);
-            ItemMaker.giveItemToPlayer(player, survivorArrow, 9);
+            itemMaker.giveItemToPlayer(player, survivorBow, 0);
+            itemMaker.giveItemToPlayer(player, survivorArrow, 9);
 
         } else if (role == PlayerRole.CORRUPTED) {
             applyCorruptedLayout(player);
 
         } else if (role == PlayerRole.PATIENT_ZERO) {
-            ItemMaker.giveItemToPlayer(player, patientzeroBow, 0);
-            ItemMaker.giveItemToPlayer(player, patientZeroSword, 2);
+            itemMaker.giveItemToPlayer(player, patientzeroBow, 0);
+            itemMaker.giveItemToPlayer(player, patientZeroSword, 2);
             player.getInventory().setHeldItemSlot(1); // Select an empty slot so that the patient-zero isn't holding an item
         }
     }
 
     // Apply corrupted layout (needs to be applied on the start of the game and after respawning)
-    public static void applyCorruptedLayout(Player player) {
-        ItemMaker.giveItemToPlayer(player, corruptedSword, 0);
-        ItemMaker.giveItemToPlayer(player, corruptedHelmet, 39);
-        ItemMaker.giveItemToPlayer(player, corruptedLeggings, 37);
-        ItemMaker.giveItemToPlayer(player, corruptedBoots, 36);
-    }
-
-    public static ItemStack getCorruptedSword() {
-        return corruptedSword;
-    }
-
-    public static ItemStack getPatientZeroSword() {
-        return patientZeroSword;
+    public void applyCorruptedLayout(Player player) {
+        itemMaker.giveItemToPlayer(player, corruptedSword, 0);
+        itemMaker.giveItemToPlayer(player, corruptedHelmet, 39);
+        itemMaker.giveItemToPlayer(player, corruptedLeggings, 37);
+        itemMaker.giveItemToPlayer(player, corruptedBoots, 36);
     }
 }

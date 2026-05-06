@@ -5,17 +5,16 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 
 public class CenterTag {
     private static final int CENTER_PX = 160; // Middle of the chat
-
-    private static final MiniMessage mm = MiniMessage.miniMessage();
+    private static final MiniMessage MM = MiniMessage.miniMessage();
 
     public static Component deserializeCentered(String input) {
         if (input == null || !input.startsWith("<center>")) {
-            return mm.deserialize(input);
+            return MM.deserialize(input);
         }
 
         // Strip <center>
         String raw = input.replaceFirst("<center>", "");
-        Component component = mm.deserialize(raw);
+        Component component = MM.deserialize(raw);
 
         int pixelLength = getPixelLength(component);
         int spaces = Math.max(0, (CENTER_PX - pixelLength / 2) / 4);

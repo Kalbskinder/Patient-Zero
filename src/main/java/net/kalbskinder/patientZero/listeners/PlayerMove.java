@@ -1,5 +1,6 @@
 package net.kalbskinder.patientZero.listeners;
 
+import lombok.RequiredArgsConstructor;
 import net.kalbskinder.patientZero.enums.GameState;
 import net.kalbskinder.patientZero.systems.QueueManager;
 import net.kalbskinder.patientZero.systems.TeleportPlayers;
@@ -15,7 +16,12 @@ import org.bukkit.event.player.PlayerMoveEvent;
 
 import java.util.ArrayList;
 
+@RequiredArgsConstructor
 public class PlayerMove implements Listener {
+    private final QueueManager queueManager;
+    private final PlayerCheck playerCheck;
+    private final TeleportPlayers teleportPlayers;
+
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
 
@@ -27,9 +33,9 @@ public class PlayerMove implements Listener {
         }
 
         Player player = event.getPlayer();
-        if (!QueueManager.isPlayerQueued(player)) return; // Exit when player is not queued
+        if (!queueManager.isPlayerQueued(player)) return; // Exit when player is not queued
 
-        if (QueueManager.getGameState(QueueManager.getMapOfPlayer(player)) != GameState.INGAME) {
+        if (queueManager.getGameState(queueManager.getMapOfPlayer(player)) != GameState.INGAME) {
             player.setAllowFlight(false);
         }
 
@@ -38,26 +44,26 @@ public class PlayerMove implements Listener {
         player.setSaturation(20f);
         player.setExhaustion(0f);
 
-        String mapName = QueueManager.getMapOfPlayer(player);
-        GameState gameState = QueueManager.getGameState(mapName);
+        String mapName = queueManager.getMapOfPlayer(player);
+        GameState gameState = queueManager.getGameState(mapName);
 
         // Only check if the game is ongoing
         if (gameState != GameState.INGAME && gameState != GameState.ENDING && gameState != GameState.STARTING) return;
 
         // Get the map corners from the config file
-        ArrayList<Location> mapCorners = PlayerCheck.getMapArea(mapName, player.getWorld());
+        ArrayList<Location> mapCorners = playerCheck.getMapArea(mapName, player.getWorld());
 
         // Check if the player has left the map area
-        if (!PlayerCheck.isInsideArea(player.getLocation(), mapCorners.get(0), mapCorners.get(1))) {
+        if (!playerCheck.isInsideArea(player.getLocation(), mapCorners.get(0), mapCorners.get(1))) {
 
             // Don't remove respawning players form queue
             if (player.getGameMode() == GameMode.SPECTATOR) {
-                TeleportPlayers.teleportPlayerToCorruptedLocations(player);
+                teleportPlayers.teleportPlayerToCorruptedLocations(player);
                 MMUtils.sendMessage(player, Prefixes.getCustomPrefix() + "<red>You can't leave this area");
                 return;
             }
 
-            QueueManager.removePlayerFromAnyQueue(player);
+            queueManager.removePlayerFromAnyQueue(player);
 
             // Only send the message if the action happened in game not while ending
             if (gameState == GameState.INGAME) {

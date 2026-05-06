@@ -3,32 +3,32 @@ package net.kalbskinder.patientZero.commands;
 import net.kalbskinder.patientZero.PatientZero;
 import net.kalbskinder.patientZero.utils.MMUtils;
 import net.kalbskinder.patientZero.utils.Prefixes;
-import org.bukkit.command.CommandSender;
+import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import java.util.Arrays;
 
 public class CreateMapCommand {
-    public static void createMap(CommandSender sender, String[] args, Player player, PatientZero plugin) {
-        String prefix = Prefixes.getPrefix();
-        String mapName = args[1];
+    private static final String PREFIX = Prefixes.getPrefix();
+
+    public void createMap(String mapName, Location loc1, Location loc2, Player player, PatientZero plugin) {
         FileConfiguration config = plugin.getConfig();
 
         // Check if a map with this name already exists
         if (config.contains("maps." + mapName)) {
-            MMUtils.sendMessage(player, prefix + "<red>A map with this name already exists!");
+            MMUtils.sendMessage(player, PREFIX + "<red>A map with this name already exists!");
             return;
         }
 
         try {
             // Parse coordinates
-            double x1 = Double.parseDouble(args[2]);
-            double y1 = Double.parseDouble(args[3]);
-            double z1 = Double.parseDouble(args[4]);
-            double x2 = Double.parseDouble(args[5]);
-            double y2 = Double.parseDouble(args[6]);
-            double z2 = Double.parseDouble(args[7]);
+            double x1 = loc1.getX();
+            double y1 = loc1.getY();
+            double z1 = loc1.getZ();
+            double x2 = loc2.getX();
+            double y2 = loc2.getY();
+            double z2 = loc2.getZ();
 
             String basePath = "maps." + mapName;
 
@@ -44,10 +44,9 @@ public class CreateMapCommand {
             plugin.saveConfig();
 
             // Send a confirmation message
-            MMUtils.sendMessage(player, prefix + "<green>Map '" + mapName + "' has been created successfully!");
-
+            MMUtils.sendMessage(player, PREFIX + "<green>Map '" + mapName + "' has been created successfully!");
         } catch (NumberFormatException e) {
-            MMUtils.sendMessage(player, prefix + "<red>Coordinates must be valid numbers.");
+            MMUtils.sendMessage(player, PREFIX + "<red>Failed to parse coordinates.");
         }
     }
 }

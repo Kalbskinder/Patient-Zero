@@ -14,9 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 public class MapSpawnsCommand {
-    private static String prefix = Prefixes.getPrefix();
+    private static final String PREFIX = Prefixes.getPrefix();
 
-    public static void addMapSpawns(CommandSender sender, String[] args, Player player, PatientZero plugin) {
+    public void addMapSpawns(CommandSender sender, String[] args, Player player, PatientZero plugin) {
         String mapName = args[1];
         String role = args[2].toLowerCase(); // "corrupted" or "survivor"
 
@@ -41,17 +41,17 @@ public class MapSpawnsCommand {
         plugin.saveConfig();
 
         // Send a chat message to notify the player that the spawnpoint was created succesfully
-        MMUtils.sendMessage(player, prefix + "<green>Added Spawnpoint for " + role + " at:");
+        MMUtils.sendMessage(player, PREFIX + "<green>Added Spawnpoint for " + role + " at:");
         MMUtils.sendMessage(player,location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ());
     }
 
-    public static void setQueueSpawn(CommandSender sender, String[] args, Player player, PatientZero plugin) {
+    public void setQueueSpawn(CommandSender sender, String[] args, Player player, PatientZero plugin) {
         String mapName = args[1];
         FileConfiguration config = plugin.getConfig();
 
         // Check if map exists
         if (!config.contains("maps." + mapName)) {
-            MMUtils.sendMessage(player, prefix + "<red>Map not found!");
+            MMUtils.sendMessage(player, PREFIX + "<red>Map not found!");
             return;
         }
 
@@ -71,8 +71,8 @@ public class MapSpawnsCommand {
         config.set("maps." + mapName + ".spawns.queue-spawn", serializedLocation);
         plugin.saveConfig();
 
-        MMUtils.sendMessage(player, prefix + "<green>Added Spawnpoint for " + mapName + " at:");
-        MMUtils.sendMessage(player, prefix + "<white>If you get an <red>error <reset>when executing <green>'/ptz join '" + mapName + "'<reset>, please <red>reastart your server<reset> and try again.");
+        MMUtils.sendMessage(player, PREFIX + "<green>Added Spawnpoint for " + mapName + " at:");
+        MMUtils.sendMessage(player, PREFIX + "<white>If you get an <red>error <reset>when executing <green>'/ptz join '" + mapName + "'<reset>, please <red>reastart your server<reset> and try again.");
     }
 
 }

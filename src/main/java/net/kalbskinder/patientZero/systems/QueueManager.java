@@ -1,13 +1,12 @@
 package net.kalbskinder.patientZero.systems;
 
+import lombok.Getter;
 import net.kalbskinder.patientZero.PatientZero;
 import net.kalbskinder.patientZero.enums.GameState;
 import net.kalbskinder.patientZero.enums.PlayerRole;
-import net.kalbskinder.patientZero.listeners.PlayerTakeDamage;
 import net.kalbskinder.patientZero.systems.scoreboard.GameSessionStats;
 import net.kalbskinder.patientZero.systems.scoreboard.ScoreboardSessionManager;
 import net.kalbskinder.patientZero.systems.scoreboard.ScoreboardUpdater;
-import net.kalbskinder.patientZero.utils.*;
 import net.kalbskinder.patientZero.utils.*;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Color;
@@ -23,18 +22,32 @@ import org.bukkit.scheduler.BukkitTask;
 import java.util.*;
 
 public class QueueManager {
-    private static final Map<String, QueueInfo> mapQueues = new HashMap<>();
-    private static PatientZero plugin;
+    private final PatientZero plugin;
+    private final ItemActionHandler itemActionHandler;
+    private final ItemMaker itemMaker;
+    private final ItemDistributor itemDistributor;
 
-    public static void register(PatientZero main) {
-        plugin = main;
+    @Getter private final ScoreboardSessionManager scoreboardSessionManager;
+    @Getter private final ScoreboardUpdater scoreboardUpdater;
+    @Getter private final TeleportPlayers teleportPlayers;
+    @Getter private final RoleUtils roleUtils;
+
+    private final Map<String, QueueInfo> mapQueues = new HashMap<>();
+    private static final String CUSTOM_PREFIX = Prefixes.getCustomPrefix();
+
+    public QueueManager(PatientZero plugin, ItemActionHandler itemActionHandler, ItemMaker itemMaker, ItemDistributor itemDistributor) {
+        this.plugin = plugin;
+        this.itemActionHandler = itemActionHandler;
+        this.itemMaker = itemMaker;
+        this.itemDistributor = itemDistributor;
+        this.scoreboardSessionManager = new ScoreboardSessionManager();
+        this.scoreboardUpdater = new ScoreboardUpdater(plugin, this, scoreboardSessionManager);
+        this.teleportPlayers = new TeleportPlayers(plugin.getConfig(), this);
+        this.roleUtils = new RoleUtils(this);
     }
 
-    private static final String customPrefix = Prefixes.getCustomPrefix();
-
-
     // Add a player to the queue hash map
-    public static void addToQueue(String mapName, Player player) {
+    public void addToQueue(String mapName, Player player) {
         QueueInfo queue = mapQueues.computeIfAbsent(mapName, m -> new QueueInfo());
 
         if (!queue.getPlayers().contains(player)) {
@@ -44,7 +57,7 @@ public class QueueManager {
 
         FileConfiguration config = plugin.getConfig();
 
-        ScoreboardUpdater.removeScoreboard(player);
+        scoreboardUpdater.removeScoreboard(player);
 
         // Get all information about the quit-item
         String itemType = config.getString("settings.quit-item.item");
@@ -57,17 +70,17 @@ public class QueueManager {
         player.getInventory().clear(); // Clear players inventory
 
         // Set right-click execution
-        ItemActionHandler.registerAction(actionId, p -> {
+        itemActionHandler.registerAction(actionId, p -> {
             p.performCommand("ptz leave");
         });
 
-        ItemStack item = ItemMaker.createItem(itemType, amount, itemName, itemLore, actionId); // Create the item
-        ItemMaker.giveItemToPlayer(player, item, slot); // Give the player the item
+        ItemStack item = itemMaker.createItem(itemType, amount, itemName, itemLore, actionId); // Create the item
+        itemMaker.giveItemToPlayer(player, item, slot); // Give the player the item
         tryStartCountdown(mapName); // Try to start the queue countdown
     }
 
     // Remove a player from a queue
-    public static boolean removePlayerFromAnyQueue(Player player) {
+    public boolean removePlayerFromAnyQueue(Player player) {
         String map = getMapOfPlayer(player);
         if (map != null) {
             QueueInfo queue = mapQueues.get(map);
@@ -87,7 +100,7 @@ public class QueueManager {
             }
 
             // Remove the scoreboard for the player
-            ScoreboardUpdater.removeScoreboard(player);
+            scoreboardUpdater.removeScoreboard(player);
 
             // Check if queue is currently in countdown
             // If less than 2 players notify last player
@@ -97,7 +110,7 @@ public class QueueManager {
                 queue.setCountdownTask(null);
                 queue.setState(GameState.WAITING); // Set mode back to waiting
                 queue.getPlayers().forEach(p -> {
-                    MMUtils.sendMessage(p, customPrefix + "<red>We don't have enough players! Start canceled.");
+                    MMUtils.sendMessage(p, CUSTOM_PREFIX + "<red>We don't have enough players! Start canceled.");
                 });
             } else if (queue.getState() == GameState.INGAME) {
 
@@ -107,22 +120,22 @@ public class QueueManager {
                     queue.setState(GameState.ENDING);
 
                     // Check which role should win
-                    if (PlayerTakeDamage.isRoleAlive(map, PlayerRole.SURVIVOR)) {
+                    if (roleUtils.isRoleAlive(map, PlayerRole.SURVIVOR)) {
                         queue.setGameWinners(PlayerRole.SURVIVOR);
                     } else {
                         queue.setGameWinners(PlayerRole.CORRUPTED);
                     }
                     gameEnd(queue, map);
-                } else if (!PlayerTakeDamage.isRoleAlive(map, PlayerRole.SURVIVOR)) {
+                } else if (!roleUtils.isRoleAlive(map, PlayerRole.SURVIVOR)) {
                     queue.setGameWinners(PlayerRole.CORRUPTED);
                     String role = plugin.getConfig().getString("roles.survivor");
 
                     // Send each player a message
                     queue.getPlayers().forEach(p -> {
-                        MMUtils.sendMessage(p, customPrefix + "<yellow>The last " + role + " <yellow> left the game!");
+                        MMUtils.sendMessage(p, CUSTOM_PREFIX + "<yellow>The last " + role + " <yellow> left the game!");
                     });
                     gameEnd(queue, map);
-                } else if (!PlayerTakeDamage.isRoleAlive(map, PlayerRole.CORRUPTED)) {
+                } else if (!roleUtils.isRoleAlive(map, PlayerRole.CORRUPTED)) {
                     queue.setGameWinners(PlayerRole.SURVIVOR);
 
                     // Send each player a message
@@ -132,13 +145,13 @@ public class QueueManager {
                     });
 
                     gameEnd(queue, map);
-                }  else if (!PlayerTakeDamage.isRoleAlive(map, PlayerRole.CORRUPTED) &&
-                        !PlayerTakeDamage.isRoleAlive(map, PlayerRole.PATIENT_ZERO)) {
+                }  else if (!roleUtils.isRoleAlive(map, PlayerRole.CORRUPTED) &&
+                        !roleUtils.isRoleAlive(map, PlayerRole.PATIENT_ZERO)) {
 
                     queue.setGameWinners(PlayerRole.SURVIVOR);
 
                     queue.getPlayers().forEach(p -> {
-                        MMUtils.sendMessage(p, customPrefix + "<yellow>All corrupted players have been eliminated!");
+                        MMUtils.sendMessage(p, CUSTOM_PREFIX + "<yellow>All corrupted players have been eliminated!");
                     });
 
                     gameEnd(queue, map);
@@ -149,28 +162,28 @@ public class QueueManager {
         return false;
     }
 
-    public static List<Player> getQueue(String mapName) {
+    public List<Player> getQueue(String mapName) {
         QueueInfo queue = mapQueues.get(mapName);
         return queue != null ? queue.getPlayers() : new ArrayList<>();
     }
 
-    public static GameState getGameState(String mapName) {
+    public GameState getGameState(String mapName) {
         QueueInfo queue = mapQueues.get(mapName);
         return queue != null ? queue.getState() : GameState.WAITING;
     }
 
 
-    public static int getQueueSize(String mapName) {
+    public int getQueueSize(String mapName) {
         QueueInfo queue = mapQueues.get(mapName);
         return queue != null ? queue.getPlayers().size() : 0;
     }
 
-    public static QueueInfo getQueueInfo(String mapName) {
+    public QueueInfo getQueueInfo(String mapName) {
         return mapQueues.get(mapName);
     }
 
 
-    public static String getMapOfPlayer(Player player) {
+    public String getMapOfPlayer(Player player) {
         for (Map.Entry<String, QueueInfo> entry : mapQueues.entrySet()) {
             if (entry.getValue().getPlayers().contains(player)) {
                 return entry.getKey();
@@ -181,12 +194,12 @@ public class QueueManager {
 
 
     // Check if a player is queued
-    public static boolean isPlayerQueued(Player player) {
+    public boolean isPlayerQueued(Player player) {
         return mapQueues.values().stream().anyMatch(q -> q.getPlayers().contains(player));
     }
 
     // Queue countdown when there's at least two players in a queue
-    public static void tryStartCountdown(String mapName) {
+    public void tryStartCountdown(String mapName) {
         QueueInfo queue = mapQueues.get(mapName);
 
         // Don't start the timer if the queue is already counting down
@@ -213,7 +226,7 @@ public class QueueManager {
                     cancel(); // Cancel runnable
 
                     // Notify other players
-                    queue.getPlayers().forEach(p -> MMUtils.sendMessage(p, customPrefix + "<red>We don't have enough players! Start canceled."));
+                    queue.getPlayers().forEach(p -> MMUtils.sendMessage(p, CUSTOM_PREFIX + "<red>We don't have enough players! Start canceled."));
                     return;
                 }
 
@@ -222,18 +235,18 @@ public class QueueManager {
                     queue.getPlayers().forEach(p -> {
                         p.getInventory().clear(); // Clear inventory
                         p.setGameMode(GameMode.SURVIVAL); // Set game mode to survival
-                        MMUtils.sendMessage(p, customPrefix + "<yellow>Game is starting");
+                        MMUtils.sendMessage(p, CUSTOM_PREFIX + "<yellow>Game is starting");
                         gameStartCountdown(mapName, p);
                     });
 
                     // Teleport player to the map
-                    TeleportPlayers.teleportPlayersOnGameStart(queue);
+                    teleportPlayers.teleportPlayersOnGameStart(queue);
                     queue.setState(GameState.STARTING); // Set map state to starting
 
                     // Setup scoreboard
-                    ScoreboardSessionManager.removeSession(mapName);
-                    ScoreboardSessionManager.createSession(mapName);
-                    GameSessionStats stats = ScoreboardSessionManager.getSession(mapName);
+                    scoreboardSessionManager.removeSession(mapName);
+                    scoreboardSessionManager.createSession(mapName);
+                    GameSessionStats stats = scoreboardSessionManager.getSession(mapName);
 
                     stats.setMapName(mapName);
                     stats.setTimer(plugin.getConfig().getInt("settings.gametime", 120));
@@ -246,7 +259,7 @@ public class QueueManager {
                         stats.getPlayerKills().put(p.getUniqueId(), 0);
                     }
 
-                    ScoreboardUpdater.startUpdater(mapName);
+                    scoreboardUpdater.startUpdater(mapName);
 
                     cancel();
                     return;
@@ -265,7 +278,7 @@ public class QueueManager {
 
                     // Send the player a message with the time remaining
                     queue.getPlayers().forEach(p -> {
-                        MMUtils.sendMessage(p, customPrefix + countdownMessage.replace("%time%", color + timeLeft));
+                        MMUtils.sendMessage(p, CUSTOM_PREFIX + countdownMessage.replace("%time%", color + timeLeft));
                         p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 1.0f); // Play a sound to the player
                     });
 
@@ -278,7 +291,7 @@ public class QueueManager {
         queue.setCountdownTask(task);
     }
 
-    public static void gameEnd(QueueInfo queue, String mapName) {
+    public void gameEnd(QueueInfo queue, String mapName) {
         List<Player> players = queue.getPlayers();
         queue.setState(GameState.ENDING);
 
@@ -293,7 +306,7 @@ public class QueueManager {
 
         // Get the end message from the config
         List<String> endMessageLines = plugin.getConfig().getStringList("messages.end-message");
-        GameSessionStats stats = ScoreboardSessionManager.getSession(mapName);
+        GameSessionStats stats = scoreboardSessionManager.getSession(mapName);
 
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 1; // 1 * 5s
@@ -348,16 +361,16 @@ public class QueueManager {
                     });
                 } else {
                     // Create copy of playlist to avoid ConcurrentModificationException
-                    List<Player> finalPlayers = new ArrayList<>(QueueManager.getQueue(mapName));
+                    List<Player> finalPlayers = new ArrayList<>(getQueue(mapName));
                     finalPlayers.forEach(p -> {
-                        if (QueueManager.isPlayerQueued(p)) {
-                            QueueManager.removePlayerFromAnyQueue(p);
+                        if (isPlayerQueued(p)) {
+                            removePlayerFromAnyQueue(p);
                             String command = plugin.getConfig().getString("settings.executes.playerOnGameEnd");
                             command = command.substring(1); // remove '/' from the start of the command
                             p.performCommand(command);
                         }
                     });
-                    ScoreboardSessionManager.removeSession(mapName);
+                    scoreboardSessionManager.removeSession(mapName);
                     queue.setState(GameState.WAITING); // Open queue for others to join again
                     cancel();
                 }
@@ -366,13 +379,13 @@ public class QueueManager {
     }
 
     // 9 seconds countdown before the roles are being assigned
-    public static void gameStartCountdown(String mapName, Player p) {
+    public void gameStartCountdown(String mapName, Player p) {
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 9; // Time in seconds
 
             @Override
             public void run() {
-                QueueInfo queue = QueueManager.getQueueInfo(mapName);
+                QueueInfo queue = getQueueInfo(mapName);
                 if (queue.getPlayers().size() < 2) {
                     cancel();
                     return;
@@ -400,7 +413,7 @@ public class QueueManager {
         }.runTaskTimer(plugin, 0, 20); // Repeats every second
     }
 
-    public static void assignRoles(String mapName) {
+    public void assignRoles(String mapName) {
         QueueInfo queue = mapQueues.get(mapName);
 
         if (queue.getState() != GameState.INGAME) return; // Only assign roles if game is still ongoing
@@ -427,7 +440,7 @@ public class QueueManager {
         }
 
         // Update scoreboard with the new assigned roles
-        GameSessionStats stats = ScoreboardSessionManager.getSession(mapName);
+        GameSessionStats stats = scoreboardSessionManager.getSession(mapName);
         stats.setPlayerRoles(queue.getRoles());
 
         // Display to each player the role they received
@@ -435,11 +448,7 @@ public class QueueManager {
             PlayerRole role = queue.getRoles().get(p);
             FileConfiguration config = plugin.getConfig();
 
-            if (config.getBoolean("settings.double-jump.enabled")) {
-                p.setAllowFlight(true);
-            } else {
-                p.setAllowFlight(false);
-            }
+            p.setAllowFlight(config.getBoolean("settings.double-jump.enabled"));
 
             // Read title from config
             String basepath = (role == PlayerRole.SURVIVOR ? "titles.roles.survivor" : "titles.roles.patientzero");
@@ -450,7 +459,7 @@ public class QueueManager {
             MMUtils.displayTitle(p, title, subtitle, 1f, 3f, 1f);
 
             // Apply inventory layout
-            ItemDistributor.applyRoleLayout(p, role);
+            itemDistributor.applyRoleLayout(p, role);
         });
     }
 

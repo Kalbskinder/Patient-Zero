@@ -1,5 +1,6 @@
 package net.kalbskinder.patientZero.listeners;
 
+import lombok.RequiredArgsConstructor;
 import net.kalbskinder.patientZero.enums.PlayerRole;
 import net.kalbskinder.patientZero.systems.QueueInfo;
 import net.kalbskinder.patientZero.systems.QueueManager;
@@ -12,14 +13,16 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.inventory.ItemStack;
 
+@RequiredArgsConstructor
 public class PlayerDropItem implements Listener {
+    private final QueueManager queueManager;
 
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         Player player = event.getPlayer();
 
         // Detect if the player is queued
-        if (QueueManager.isPlayerQueued(player)) {
+        if (queueManager.isPlayerQueued(player)) {
             event.setCancelled(true); // Cancel the event (item will not be dropped)
         }
 
@@ -29,10 +32,10 @@ public class PlayerDropItem implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!QueueManager.isPlayerQueued(player)) return; // Check if player is queued
+        if (!queueManager.isPlayerQueued(player)) return; // Check if player is queued
 
-        String map = QueueManager.getMapOfPlayer(player);
-        QueueInfo queue = QueueManager.getQueueInfo(map);
+        String map = queueManager.getMapOfPlayer(player);
+        QueueInfo queue = queueManager.getQueueInfo(map);
         PlayerRole role = queue.getRoles().get(player);
 
         // Only corrupted players have armor, check if he tried taking off his armor

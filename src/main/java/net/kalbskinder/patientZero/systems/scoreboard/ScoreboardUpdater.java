@@ -1,5 +1,6 @@
 package net.kalbskinder.patientZero.systems.scoreboard;
 
+import lombok.RequiredArgsConstructor;
 import net.kalbskinder.patientZero.PatientZero;
 import net.kalbskinder.patientZero.enums.GameState;
 import net.kalbskinder.patientZero.enums.PlayerRole;
@@ -19,25 +20,22 @@ import org.bukkit.scoreboard.ScoreboardManager;
 import java.util.List;
 import java.util.Map;
 
+@RequiredArgsConstructor
 public class ScoreboardUpdater {
-    private static FileConfiguration config;
-    private static PatientZero plugin;
-    private static final MiniMessage mm = MiniMessage.miniMessage();
-    private static final LegacyComponentSerializer legacy = LegacyComponentSerializer.legacySection();
-
-    public static void register(PatientZero main) {
-        plugin = main;
-        config = main.getConfig();
-    }
-
-    private static int timer = 5;
+    private final PatientZero plugin;
+    private final QueueManager queueManager;
+    private final ScoreboardSessionManager scoreboardSessionManager;
+    
+    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
+    private static int TIMER = 5;
 
     // Updater to update the scoreboard all 4 ticks
-    public static void startUpdater(String mapName) {
+    public void startUpdater(String mapName) {
         new BukkitRunnable() {
             @Override
             public void run() {
-                QueueInfo queue = QueueManager.getQueueInfo(mapName);
+                QueueInfo queue = queueManager.getQueueInfo(mapName);
 
                 if (queue == null) {
                     return;
@@ -61,12 +59,13 @@ public class ScoreboardUpdater {
         }.runTaskTimer(plugin, 0, 4); // All 4 Ticks (0.2s)
     }
 
-    public static void updateScoreboardForPlayer(Player player, QueueInfo queue) {
+    public void updateScoreboardForPlayer(Player player, QueueInfo queue) {
+        FileConfiguration config = plugin.getConfig();
         String name = config.getString("scoreboard.title", "<yellow><bold>Scoreboard<reset>");
         List<String> lines = config.getStringList("scoreboard.lines");
 
-        String mapName = QueueManager.getMapOfPlayer(queue.getPlayers().getFirst());
-        GameSessionStats stats = ScoreboardSessionManager.getSession(mapName);
+        String mapName = queueManager.getMapOfPlayer(queue.getPlayers().getFirst());
+        GameSessionStats stats = scoreboardSessionManager.getSession(mapName);
 
         // Get the player role
         Map<Player, PlayerRole> playerRoles = stats.getPlayerRoles();
@@ -91,7 +90,7 @@ public class ScoreboardUpdater {
         int corrupted = stats.getCorruptedCount();
         String timer = formatSeconds(stats.getTimer());
         int kills = stats.getPlayerKills().getOrDefault(player.getUniqueId(), 0);
-        String map = QueueManager.getMapOfPlayer(player);
+        String map = queueManager.getMapOfPlayer(player);
 
         if (lines.isEmpty()) {
             lines = List.of("<gray>Scoreboard empty");
@@ -100,7 +99,7 @@ public class ScoreboardUpdater {
         Scoreboard sb = Bukkit.getScoreboardManager().getNewScoreboard();
         Objective obj = sb.registerNewObjective("dummy", "dummy");
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
-        obj.setDisplayName(legacy.serialize(mm.deserialize(name)));
+        obj.setDisplayName(LEGACY.serialize(MM.deserialize(name)));
 
         int score = lines.size();
         for (String line : lines) {
@@ -113,7 +112,7 @@ public class ScoreboardUpdater {
                     .replace("%kills%", String.valueOf(kills))
                     .replace("%map%", map);
 
-            formatted = legacy.serialize(mm.deserialize(formatted));
+            formatted = LEGACY.serialize(MM.deserialize(formatted));
             obj.getScore(formatted).setScore(score--);
         }
 
@@ -121,33 +120,33 @@ public class ScoreboardUpdater {
     }
 
     // Format the seconds left into a readable format
-    private static String formatSeconds(int seconds) {
+    private String formatSeconds(int seconds) {
         int min = seconds / 60;
         int sec = seconds % 60;
         return String.format("%d:%02d", min, sec);
     }
 
     // Updates the timer all 5*4 ticks (every second)
-    private static void updateTimer(String mapName) {
-        GameSessionStats stats = ScoreboardSessionManager.getSession(mapName);
+    private void updateTimer(String mapName) {
+        GameSessionStats stats = scoreboardSessionManager.getSession(mapName);
 
         if (stats == null) return;
 
-        if (timer == 0) {
+        if (TIMER == 0) {
             if (stats.getTimer() >=1) {
                 stats.setTimer(stats.getTimer() - 1);
             } else {
-                QueueInfo queue = QueueManager.getQueueInfo(mapName);
+                QueueInfo queue = queueManager.getQueueInfo(mapName);
                 queue.setGameWinners(PlayerRole.SURVIVOR);
-                QueueManager.gameEnd(queue, mapName);
+                queueManager.gameEnd(queue, mapName);
             }
-            timer = 5;
+            TIMER = 5;
         }
-        timer--;
+        TIMER--;
     }
 
     // Remove the scoreboard from the player
-    public static void removeScoreboard(Player player) {
+    public void removeScoreboard(Player player) {
         if (player == null || !player.isOnline()) {
             return;
         }

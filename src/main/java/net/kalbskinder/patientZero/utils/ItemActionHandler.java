@@ -1,5 +1,6 @@
 package net.kalbskinder.patientZero.utils;
 
+import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -12,10 +13,11 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
+@RequiredArgsConstructor
 public class ItemActionHandler implements Listener {
-    private static final Logger logger = Logger.getLogger("PTZ");
-    private static final Map<String, Consumer<Player>> actions = new HashMap<>();
-
+    private final ItemMaker itemMaker;
+    private final Map<String, Consumer<Player>> actions = new HashMap<>();
+    private static final Logger LOGGER = Logger.getLogger("PTZ");
 
     /**
      * Registers a right-click action for an item.
@@ -23,9 +25,9 @@ public class ItemActionHandler implements Listener {
      * @param actionId The unique identifier for the action.
      * @param action   The action to perform when the item is right-clicked.
      */
-    public static void registerAction(String actionId, Consumer<Player> action) {
+    public void registerAction(String actionId, Consumer<Player> action) {
         if (actionId == null || actionId.trim().isEmpty()) {
-            logger.warning("Invalid actionId for item action registration");
+            LOGGER.warning("Invalid actionId for item action registration");
             return;
         }
         actions.put(actionId, action);
@@ -45,14 +47,14 @@ public class ItemActionHandler implements Listener {
             return;
         }
 
-        String actionId = ItemMaker.getActionId(item);
+        String actionId = itemMaker.getActionId(item);
         if (actionId == null) {
             return;
         }
 
         Consumer<Player> action = actions.get(actionId);
         if (action == null) {
-            logger.warning("No action registered for actionId: " + actionId);
+            LOGGER.warning("No action registered for actionId: " + actionId);
             return;
         }
 

@@ -8,11 +8,11 @@ import org.bukkit.entity.Player;
 import java.time.Duration;
 
 public class MMUtils {
-    private static final MiniMessage mm = MiniMessage.miniMessage();
+    private static final MiniMessage MM = MiniMessage.miniMessage();
 
     // Sends a player a message with the minimessage format
     public static void sendMessage(Player player, String message) {
-        Component parsed = mm.deserialize(message);
+        Component parsed = MM.deserialize(message);
         player.sendMessage(parsed);
     }
 
@@ -22,8 +22,8 @@ public class MMUtils {
 
     // Displays a player a title with the minimessage format
     public static void displayTitle (Player player, String title, String subtitle, float fadeIn, float stay, float fadeOut) {
-        Component mainTitle = mm.deserialize(title);
-        Component sub = mm.deserialize(subtitle);
+        Component mainTitle = MM.deserialize(title);
+        Component sub = MM.deserialize(subtitle);
 
         Title.Times times = Title.Times.times(
                 Duration.ofMillis((long) (fadeIn * 1000)),

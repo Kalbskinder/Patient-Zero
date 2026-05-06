@@ -1,5 +1,6 @@
 package net.kalbskinder.patientZero.commands;
 
+import lombok.RequiredArgsConstructor;
 import net.kalbskinder.patientZero.PatientZero;
 import net.kalbskinder.patientZero.enums.GameState;
 import net.kalbskinder.patientZero.systems.Queue;
@@ -14,11 +15,14 @@ import org.bukkit.entity.Player;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 public class JoinLeaveCommand {
-    private static String prefix = Prefixes.getPrefix();
+    private final Queue queue;
+    private final QueueManager queueManager;
 
+    private static final String PREFIX = Prefixes.getPrefix();
 
-    public static void joinMap(String[] args, Player player, PatientZero plugin) {
+    public void joinMap(String[] args, Player player, PatientZero plugin) {
         FileConfiguration config = plugin.getConfig();
 
         String customPrefix = Prefixes.getCustomPrefix();
@@ -40,27 +44,27 @@ public class JoinLeaveCommand {
                 Location loc = new Location(world, x, y, z, yaw, pitch); // Location to teleport to
 
                 // Only teleport the player if he was able to join the queue
-                if (Queue.canPlayerJoinQueue(player, mapName, plugin)) { // Check if the player is able to join the queue
+                if (queue.canPlayerJoinQueue(player, mapName, plugin)) { // Check if the player is able to join the queue
                     player.teleport(loc); // Teleport the player to the defined location
-                    QueueManager.addToQueue(mapName, player); // Add the player to the queue
+                    queueManager.addToQueue(mapName, player); // Add the player to the queue
                     MMUtils.sendMessage(player, customPrefix + updateJoinLeaveMessages(joinMessage, customPrefix, player, plugin, false));
                 }
             } else {
-                MMUtils.sendMessage(player, prefix + "<red>World '" + data.get(0) + "' was not found.");
+                MMUtils.sendMessage(player, PREFIX + "<red>World '" + data.getFirst() + "' was not found.");
             }
         } else {
-            MMUtils.sendMessage(player, prefix + "<red>Map not found or no spawn point registered. Use '/ptz setqueue-spawn <map-name>'");
+            MMUtils.sendMessage(player, PREFIX + "<red>Map not found or no spawn point registered. Use '/ptz setqueue-spawn <map-name>'");
         }
     }
 
-    public static void leaveMap(Player player, PatientZero plugin) {
+    public void leaveMap(Player player, PatientZero plugin) {
         FileConfiguration config = plugin.getConfig();
 
-        if (!QueueManager.isPlayerQueued(player)) {
+        if (!queueManager.isPlayerQueued(player)) {
             return;
         }
 
-        GameState gameState = QueueManager.getGameState(QueueManager.getMapOfPlayer(player));
+        GameState gameState = queueManager.getGameState(queueManager.getMapOfPlayer(player));
 
         String executeCommand = config.getString("settings.executes.playerOnLeaveQueue", "/me Teleport me!");
         executeCommand = executeCommand.substring(1);
@@ -72,7 +76,7 @@ public class JoinLeaveCommand {
             // Replace placeholders in the leave message
             String updatedLeaveMessage = updateJoinLeaveMessages(leaveMessage, customPrefix, player, plugin, true);
 
-            if(QueueManager.removePlayerFromAnyQueue(player)) {
+            if(queueManager.removePlayerFromAnyQueue(player)) {
                 MMUtils.sendMessage(player, customPrefix + updatedLeaveMessage);
                 player.performCommand(executeCommand);
             } else {
@@ -80,18 +84,18 @@ public class JoinLeaveCommand {
             }
         } else {
             // Remove player from queue without notifying others
-            QueueManager.removePlayerFromAnyQueue(player);
+            queueManager.removePlayerFromAnyQueue(player);
             player.performCommand(executeCommand);
         }
     }
 
-    private static String updateJoinLeaveMessages(String message, String customPrefix, Player player, PatientZero plugin, Boolean leave) {
+    private String updateJoinLeaveMessages(String message, String customPrefix, Player player, PatientZero plugin, Boolean leave) {
         FileConfiguration config = plugin.getConfig();
 
-        String mapName = QueueManager.getMapOfPlayer(player);
+        String mapName = queueManager.getMapOfPlayer(player);
         String playerName = player.getName();
 
-        List<Player> queue = QueueManager.getQueue(mapName);
+        List<Player> queue = queueManager.getQueue(mapName);
 
         int maxQueueSize = config.getInt("maps." + mapName + ".queue-limit", 8);
         int queueSize = queue.size();

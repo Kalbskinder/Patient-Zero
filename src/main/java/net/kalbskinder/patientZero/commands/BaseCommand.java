@@ -1,7 +1,6 @@
 package net.kalbskinder.patientZero.commands;
 
 import com.mojang.brigadier.Command;
-import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -9,10 +8,13 @@ import com.mojang.brigadier.context.CommandContext;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
+import lombok.RequiredArgsConstructor;
 import net.kalbskinder.patientZero.PatientZero;
+import net.kalbskinder.patientZero.systems.LocationSelection;
 import net.kalbskinder.patientZero.systems.Queue;
 import net.kalbskinder.patientZero.utils.MMUtils;
 import net.kalbskinder.patientZero.utils.Prefixes;
+import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
@@ -21,14 +23,13 @@ import org.bukkit.entity.Player;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-
+@RequiredArgsConstructor
 public class BaseCommand {
-    private final PatientZero plugin;
     private static final String PREFIX = Prefixes.getPrefix();
     private static final List<String> SUBCOMMANDS = List.of(
             "help",
             "createmap",
-            "listmaps",
+            "list",
             "deletemap",
             "addspawn",
             "setqueue-spawn",
@@ -37,9 +38,15 @@ public class BaseCommand {
             "leave"
     );
 
-    public BaseCommand(PatientZero plugin) {
-        this.plugin = plugin;
-    }
+    private final CreateMapCommand createMapCommand;
+    private final DeleteMapCommand deleteMapCommand;
+    private final JoinLeaveCommand joinLeaveCommand;
+    private final ListCommands listCommands;
+    private final MapSpawnsCommand mapSpawnsCommand;
+
+    private final PatientZero plugin;
+    private final Queue queue;
+    private final LocationSelection locationSelection;
 
     public void register() {
         plugin.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
@@ -49,14 +56,12 @@ public class BaseCommand {
                             .executes(this::executeHelp))
                     .then(Commands.literal("createmap")
                             .then(Commands.argument("map-name", StringArgumentType.word())
-                                    .then(Commands.argument("x1", DoubleArgumentType.doubleArg())
-                                            .then(Commands.argument("y1", DoubleArgumentType.doubleArg())
-                                                    .then(Commands.argument("z1", DoubleArgumentType.doubleArg())
-                                                            .then(Commands.argument("x2", DoubleArgumentType.doubleArg())
-                                                                    .then(Commands.argument("y2", DoubleArgumentType.doubleArg())
-                                                                            .then(Commands.argument("z2", DoubleArgumentType.doubleArg())
-                                                                                    .executes(this::executeCreateMap)))))))))
-                    .then(Commands.literal("listmaps")
+                                .executes(this::executeCreateMap))
+                   .then(Commands.literal("pos1"))
+                            .executes(this::executeSetPos1)
+                   .then(Commands.literal("pos2"))
+                            .executes(this::executeSetPos2)
+                    .then(Commands.literal("list"))
                             .executes(this::executeListMaps))
                     .then(Commands.literal("deletemap")
                             .then(Commands.argument("map-name", StringArgumentType.word())
@@ -127,16 +132,6 @@ public class BaseCommand {
         return builder.buildFuture();
     }
 
-    private Player requirePlayer(CommandContext<CommandSourceStack> context) {
-        CommandSender sender = context.getSource().getSender();
-        if (sender instanceof Player player) {
-            return player;
-        }
-
-        sender.sendMessage("Only players can execute this command.");
-        return null;
-    }
-
     private int executeBase(CommandContext<CommandSourceStack> context) {
         Player player = requirePlayer(context);
         if (player == null || !playerHasPermission("ptz.admin", player)) {
@@ -154,12 +149,14 @@ public class BaseCommand {
         }
 
         MMUtils.sendMessage(player, PREFIX + "<green>Available commands:<reset>");
-        MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>createmap <gray><map-name> <x1> <y1> <z1> <x2> <y2> <z2>");
+        MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>createmap <gray><map-name>");
+        MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>pos1");
+        MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>pos2");
         MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>deletemap <gray><map-name>");
         MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>addspawn <gray><map-name> <role>");
         MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>setqueue-spawn <gray><map-name>");
         MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>setqueue-limit <gray><map-name> <int-limit>");
-        MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>listmaps");
+        MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>list");
         MMUtils.sendMessage(player, "");
         MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>join <gray><map-name>");
         MMUtils.sendMessage(player, "<gray>- <yellow>/ptz <gold>leave");
@@ -172,18 +169,16 @@ public class BaseCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        String[] args = {
-                "createmap",
-                StringArgumentType.getString(context, "map-name"),
-                String.valueOf(DoubleArgumentType.getDouble(context, "x1")),
-                String.valueOf(DoubleArgumentType.getDouble(context, "y1")),
-                String.valueOf(DoubleArgumentType.getDouble(context, "z1")),
-                String.valueOf(DoubleArgumentType.getDouble(context, "x2")),
-                String.valueOf(DoubleArgumentType.getDouble(context, "y2")),
-                String.valueOf(DoubleArgumentType.getDouble(context, "z2"))
-        };
+        String mapName = StringArgumentType.getString(context, "map-name");
+        Location pos1 = locationSelection.getPos1();
+        Location pos2 = locationSelection.getPos2();
 
-        CreateMapCommand.createMap(context.getSource().getSender(), args, player, plugin);
+        if (pos1 == null || pos2 == null) {
+            MMUtils.sendMessage(player, PREFIX + "<red>You need to set both positions first using '/ptz pos1' and '/ptz pos2'.");
+            return Command.SINGLE_SUCCESS;
+        }
+
+        createMapCommand.createMap(mapName, pos1, pos2, player, plugin);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -193,7 +188,7 @@ public class BaseCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        ListCommands.listMaps(context.getSource().getSender(), new String[]{"listmaps"}, player, plugin);
+        listCommands.listMaps(context.getSource().getSender(), new String[]{"listmaps"}, player, plugin);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -204,7 +199,7 @@ public class BaseCommand {
         }
 
         String[] args = {"deletemap", StringArgumentType.getString(context, "map-name")};
-        DeleteMapCommand.deleteMap(context.getSource().getSender(), args, player, plugin);
+        deleteMapCommand.deleteMap(context.getSource().getSender(), args, player, plugin);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -221,7 +216,7 @@ public class BaseCommand {
         }
 
         String[] args = {"addspawn", StringArgumentType.getString(context, "map-name"), role};
-        MapSpawnsCommand.addMapSpawns(context.getSource().getSender(), args, player, plugin);
+        mapSpawnsCommand.addMapSpawns(context.getSource().getSender(), args, player, plugin);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -232,7 +227,7 @@ public class BaseCommand {
         }
 
         String[] args = {"setqueue-spawn", StringArgumentType.getString(context, "map-name")};
-        MapSpawnsCommand.setQueueSpawn(context.getSource().getSender(), args, player, plugin);
+        mapSpawnsCommand.setQueueSpawn(context.getSource().getSender(), args, player, plugin);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -247,7 +242,7 @@ public class BaseCommand {
                 StringArgumentType.getString(context, "map-name"),
                 String.valueOf(IntegerArgumentType.getInteger(context, "int-limit"))
         };
-        Queue.setQueueLimit(context.getSource().getSender(), args, player, plugin);
+        queue.setQueueLimit(context.getSource().getSender(), args, player, plugin);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -258,7 +253,7 @@ public class BaseCommand {
         }
 
         String[] args = {"join", StringArgumentType.getString(context, "map-name")};
-        JoinLeaveCommand.joinMap(args, player, plugin);
+        joinLeaveCommand.joinMap(args, player, plugin);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -268,7 +263,27 @@ public class BaseCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        JoinLeaveCommand.leaveMap(player, plugin);
+        joinLeaveCommand.leaveMap(player, plugin);
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int executeSetPos1(CommandContext<CommandSourceStack> context) {
+        Player player = requirePlayer(context);
+        if (player == null || !playerHasPermission("ptz.admin", player)) {
+            return Command.SINGLE_SUCCESS;
+        }
+
+        locationSelection.setPos1(getFootBlockLocation(player));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int executeSetPos2(CommandContext<CommandSourceStack> context) {
+        Player player = requirePlayer(context);
+        if (player == null || !playerHasPermission("ptz.admin", player)) {
+            return Command.SINGLE_SUCCESS;
+        }
+
+        locationSelection.setPos2(getFootBlockLocation(player));
         return Command.SINGLE_SUCCESS;
     }
 
@@ -280,6 +295,27 @@ public class BaseCommand {
 
         MMUtils.sendMessage(player, PREFIX + "<red>Unknown subcommand. Use <yellow>/ptz help <red>for a list of commands.");
         return Command.SINGLE_SUCCESS;
+    }
+
+    /*
+    * Utilities
+    */
+    private Player requirePlayer(CommandContext<CommandSourceStack> context) {
+        CommandSender sender = context.getSource().getSender();
+        if (sender instanceof Player player) {
+            return player;
+        }
+
+        sender.sendMessage("Only players can execute this command.");
+        return null;
+    }
+
+    private Location getFootBlockLocation(Player player) {
+        Location loc = player.getLocation();
+        int x = loc.getBlockX();
+        int y = loc.getBlockY() - 1;
+        int z = loc.getBlockZ();
+        return new Location(loc.getWorld(), x, y, z);
     }
 
     // Checks if a player has the required permission or is an admin.

@@ -1,6 +1,6 @@
 package net.kalbskinder.patientZero.utils;
 
-import net.kalbskinder.patientZero.PatientZero;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -9,12 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+@RequiredArgsConstructor
 public class PlayerCheck {
-    private static FileConfiguration config;
-
-    public static void register(PatientZero plugin) {
-        config = plugin.getConfig();
-    }
+    private final FileConfiguration config;
 
     /**
      * Checks whether the given location is inside the rectangular area defined by two corner positions.
@@ -24,7 +21,7 @@ public class PlayerCheck {
      * @param pos2 The position of the second corner (diagonal of the first) of the area to check for
      * @return Returns true if the player is inside the specified area, false otherwise
      */
-    public static boolean isInsideArea(Location loc, Location pos1, Location pos2) {
+    public boolean isInsideArea(Location loc, Location pos1, Location pos2) {
         if (loc == null || pos1 == null || pos2 == null) return false;
         if (!loc.getWorld().equals(pos1.getWorld())) return false;
 
@@ -48,7 +45,7 @@ public class PlayerCheck {
     }
 
     // Reads the configured boundaries of a map from the config
-    public static ArrayList<Location> getMapArea (String mapName, World world) {
+    public ArrayList<Location> getMapArea (String mapName, World world) {
         List<?> pos1 = config.getList("maps." + mapName + ".area.pos1");
         List<?> pos2 = config.getList("maps." + mapName + ".area.pos2");
 
@@ -61,7 +58,7 @@ public class PlayerCheck {
     }
 
     // Reads the x, y, z values from a list. Builds a location and returns it.
-    public static Location buildLocation(List<?> data, World world) {
+    public Location buildLocation(List<?> data, World world) {
         if (data == null || data.size() < 3) return null;
 
         try {

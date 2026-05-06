@@ -1,5 +1,6 @@
 package net.kalbskinder.patientZero.listeners;
 
+import lombok.RequiredArgsConstructor;
 import net.kalbskinder.patientZero.PatientZero;
 import net.kalbskinder.patientZero.enums.GameState;
 import net.kalbskinder.patientZero.enums.PlayerRole;
@@ -10,6 +11,7 @@ import net.kalbskinder.patientZero.systems.TeleportPlayers;
 import net.kalbskinder.patientZero.systems.scoreboard.GameSessionStats;
 import net.kalbskinder.patientZero.systems.scoreboard.ScoreboardSessionManager;
 import net.kalbskinder.patientZero.utils.MMUtils;
+import net.kalbskinder.patientZero.utils.RoleUtils;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -26,15 +28,15 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.Map;
 
+@RequiredArgsConstructor
 public class PlayerTakeDamage implements Listener {
-    public static FileConfiguration config;
-    private static PatientZero plugin;
-
-    public PlayerTakeDamage(PatientZero main) {
-        config = main.getConfig();
-        plugin = main;
-    }
-
+    private FileConfiguration config;
+    private PatientZero plugin;
+    private final QueueManager queueManager;
+    private final ScoreboardSessionManager scoreboardSessionManager;
+    private final ItemDistributor itemDistributor;
+    private final TeleportPlayers teleportPlayers;
+    private final RoleUtils roleUtils;
 
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent e) {
@@ -44,10 +46,10 @@ public class PlayerTakeDamage implements Listener {
             Entity damager = e.getDamager(); // The Entity that hurt the player
 
             // Check if the player was queued
-            if (!QueueManager.isPlayerQueued(victim)) return;
+            if (!queueManager.isPlayerQueued(victim)) return;
 
-            String mapName = QueueManager.getMapOfPlayer(victim);
-            QueueInfo queue = QueueManager.getQueueInfo(mapName);
+            String mapName = queueManager.getMapOfPlayer(victim);
+                QueueInfo queue = queueManager.getQueueInfo(mapName);
 
             // Only allow damage in game
             if (queue.getState() != GameState.INGAME) {
@@ -68,7 +70,7 @@ public class PlayerTakeDamage implements Listener {
                     PlayerRole victimRole = playerRoles.get(victim);
                     PlayerRole shooterRole = playerRoles.get(shooter);
 
-                    GameSessionStats stats = ScoreboardSessionManager.getSession(mapName);
+                    GameSessionStats stats = scoreboardSessionManager.getSession(mapName);
 
                     // Survivors can't hurt each other
                     if (victimRole == PlayerRole.SURVIVOR && shooterRole == PlayerRole.SURVIVOR) {
@@ -81,7 +83,7 @@ public class PlayerTakeDamage implements Listener {
                         int currentKills = stats.getPlayerKills().getOrDefault(shooter.getUniqueId(), 0);
                         stats.getPlayerKills().put(shooter.getUniqueId(), currentKills + 1);
 
-                        if (isRoleAlive(mapName, PlayerRole.PATIENT_ZERO)) {
+                        if (roleUtils.isRoleAlive(mapName, PlayerRole.PATIENT_ZERO)) {
                             corruptedRespawn(victim); // Start respawn cycle
                             return;
                         }
@@ -90,9 +92,9 @@ public class PlayerTakeDamage implements Listener {
                         playerRoles.remove(victim); // Player can no longer respawn
 
                         // Check if there's any other corrupted players left
-                        if (!isRoleAlive(mapName, PlayerRole.CORRUPTED)) {
+                        if (!roleUtils.isRoleAlive(mapName, PlayerRole.CORRUPTED)) {
                             queue.setGameWinners(PlayerRole.SURVIVOR); // Set game winners as survivors
-                            QueueManager.gameEnd(queue, mapName);
+                                queueManager.gameEnd(queue, mapName);
                             return;
                         }
 
@@ -110,9 +112,9 @@ public class PlayerTakeDamage implements Listener {
                         stats.getPlayerKills().put(shooter.getUniqueId(), currentKills + 1);
 
                         // Check if there's any corrupted alive, else survivors win
-                        if (!isRoleAlive(mapName, PlayerRole.CORRUPTED)) {
+                        if (!roleUtils.isRoleAlive(mapName, PlayerRole.CORRUPTED)) {
                             queue.setGameWinners(PlayerRole.SURVIVOR); // Set game winners as survivors
-                            QueueManager.gameEnd(queue, mapName); // End the game
+                            queueManager.gameEnd(queue, mapName); // End the game
                             return;
                         }
 
@@ -179,8 +181,8 @@ public class PlayerTakeDamage implements Listener {
                 if (victimRole == PlayerRole.SURVIVOR) {
                     // Patient-Zero and Corrupted can only damage survivors with their swords
                     Material mainHand = ((Player) damager).getInventory().getItemInMainHand().getType();
-                    Material ptzSword = ItemDistributor.getPatientZeroSword().getType();
-                    Material corruptedSword = ItemDistributor.getCorruptedSword().getType();
+                    Material ptzSword = itemDistributor.getPatientZeroSword().getType();
+                    Material corruptedSword = itemDistributor.getCorruptedSword().getType();
 
                     // Check if the patient-zero was holding his sword
                     if (damagerRole == PlayerRole.PATIENT_ZERO && mainHand != ptzSword) {
@@ -195,16 +197,16 @@ public class PlayerTakeDamage implements Listener {
                     }
 
                     // Update the kill counter
-                    GameSessionStats stats = ScoreboardSessionManager.getSession(mapName);
+                    GameSessionStats stats = scoreboardSessionManager.getSession(mapName);
                     int currentKills = stats.getPlayerKills().getOrDefault(damager.getUniqueId(), 0);
                     stats.getPlayerKills().put(damager.getUniqueId(), currentKills + 1);
 
                     playerRoles.put(victim, PlayerRole.CORRUPTED); // Update the players role
 
-                    if (!isRoleAlive(mapName, PlayerRole.SURVIVOR)) {
+                    if (!roleUtils.isRoleAlive(mapName, PlayerRole.SURVIVOR)) {
                         playerRoles.put(victim, PlayerRole.SURVIVOR); // Return the players old role to not win if he was a survivor
                         queue.setGameWinners(PlayerRole.CORRUPTED); // Set game winners as corrupted (and patient-zero)
-                        QueueManager.gameEnd(queue, mapName);
+                        queueManager.gameEnd(queue, mapName);
                         return;
                     }
 
@@ -220,30 +222,12 @@ public class PlayerTakeDamage implements Listener {
         }
     }
 
-    // Checks if a player with the given role is still alive
-    public static boolean isRoleAlive(String mapName, PlayerRole role) {
-        QueueInfo queue = QueueManager.getQueueInfo(mapName);
-
-        if (queue == null || queue.getRoles() == null) return false;
-
-        for (Map.Entry<Player, PlayerRole> entry : queue.getRoles().entrySet()) {
-            Player player = entry.getKey();
-            PlayerRole playerRole = entry.getValue();
-
-            if (playerRole == role && player.isOnline() && !player.isDead()) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     // The respawn cycle for corrupted players
-    public static void corruptedRespawn(Player player) {
+    private void corruptedRespawn(Player player) {
         player.getInventory().clear(); // Clear the players currently applied layout
         if (player.getGameMode() != GameMode.SPECTATOR) player.setGameMode(GameMode.SPECTATOR);
 
-        GameState gameState = QueueManager.getGameState(QueueManager.getMapOfPlayer(player));
+        GameState gameState = queueManager.getGameState(queueManager.getMapOfPlayer(player));
 
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 5; // Time in seconds
@@ -258,8 +242,8 @@ public class PlayerTakeDamage implements Listener {
 
                 if (timeLeft == 0) {
                     player.setGameMode(GameMode.SURVIVAL);
-                    ItemDistributor.applyCorruptedLayout(player); // Apply layout for corrupted players
-                    TeleportPlayers.teleportPlayerToCorruptedLocations(player); // Teleport player to a random spawn location
+                    itemDistributor.applyCorruptedLayout(player); // Apply layout for corrupted players
+                    teleportPlayers.teleportPlayerToCorruptedLocations(player); // Teleport player to a random spawn location
                     cancel(); // Cancel timer
                 }
 
@@ -279,7 +263,7 @@ public class PlayerTakeDamage implements Listener {
     // Players can't die during the game
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        if (QueueManager.isPlayerQueued(event.getPlayer())) {
+        if (queueManager.isPlayerQueued(event.getPlayer())) {
             event.setCancelled(true);
         }
     }

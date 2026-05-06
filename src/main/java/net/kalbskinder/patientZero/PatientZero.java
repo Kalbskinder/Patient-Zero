@@ -1,43 +1,47 @@
 package net.kalbskinder.patientZero;
 
+import net.kalbskinder.patientZero.commands.*;
 import net.kalbskinder.patientZero.listeners.*;
-import net.kalbskinder.patientZero.systems.ItemDistributor;
-import net.kalbskinder.patientZero.systems.QueueManager;
-import net.kalbskinder.patientZero.systems.TeleportPlayers;
+import net.kalbskinder.patientZero.systems.*;
+import net.kalbskinder.patientZero.systems.scoreboard.ScoreboardSessionManager;
 import net.kalbskinder.patientZero.systems.scoreboard.ScoreboardUpdater;
-import net.kalbskinder.patientZero.utils.ItemActionHandler;
-import net.kalbskinder.patientZero.utils.PlayerCheck;
-import net.kalbskinder.patientZero.utils.Prefixes;
+import net.kalbskinder.patientZero.utils.*;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import net.kalbskinder.patientZero.commands.BaseCommand;
 
 import java.util.logging.Logger;
 
 public final class PatientZero extends JavaPlugin {
+    private final PlayerCheck playerCheck = new PlayerCheck(getConfig());
+    private final ItemMaker itemMaker = new ItemMaker();
+    private final ItemActionHandler itemActionHandler = new ItemActionHandler(itemMaker);
+    private final ItemDistributor itemDistributor = new ItemDistributor(this, itemMaker);
+
+    private final QueueManager queueManager = new QueueManager(this, itemActionHandler, itemMaker, itemDistributor);
+    private final TeleportPlayers teleportPlayers = queueManager.getTeleportPlayers();
+    private final RoleUtils roleUtils = queueManager.getRoleUtils();
+    private final ScoreboardUpdater scoreboardUpdater = queueManager.getScoreboardUpdater();
+    private final ScoreboardSessionManager scoreboardSessionManager = queueManager.getScoreboardSessionManager();
+
+    private final Queue queue = new Queue(queueManager);
 
     // Register event listeners
     private void registerListeners() {
         PluginManager pm = getServer().getPluginManager();
-        pm.registerEvents(new PlayerQuit(), this); // Player quit event
-        pm.registerEvents(new PlayerMove(), this); // Player move event
-        pm.registerEvents(new ItemActionHandler(), this); // Item right-click event
-        pm.registerEvents(new PlayerDropItem(), this); // Drop item event
-        pm.registerEvents(new PlayerChangeWorld(), this); // Player change world event
-        pm.registerEvents(new PlayerTakeDamage(this), this); // Player takes damage, handles respawn and game end mechanics
-        pm.registerEvents(new EntityShootArrow(), this); // Entity shoot arrow event, makes it so players can't pick up the arrow
-        pm.registerEvents(new PlayerBreakBlock(), this); // Player break block event, cancel event if player is queued
-        pm.registerEvents(new DoubleJumpListener(this), this); // Listener when player trys double jumping
+        pm.registerEvents(new PlayerQuit(queueManager), this); // Player quit event
+        pm.registerEvents(new PlayerMove(queueManager, playerCheck, teleportPlayers), this); // Player move event
+        pm.registerEvents(new ItemActionHandler(itemMaker), this); // Item right-click event
+        pm.registerEvents(new PlayerDropItem(queueManager), this); // Drop item event
+        pm.registerEvents(new PlayerChangeWorld(queueManager), this); // Player change world event
+        pm.registerEvents(new PlayerTakeDamage(queueManager, scoreboardSessionManager, itemDistributor, teleportPlayers, roleUtils), this); // Player takes damage, handles respawn and game end mechanics
+        pm.registerEvents(new EntityShootArrow(queueManager), this); // Entity shoot arrow event, makes it so players can't pick up the arrow
+        pm.registerEvents(new PlayerBreakBlock(queueManager), this); // Player break block event, cancel event if player is queued
+        pm.registerEvents(new DoubleJumpListener(this, queueManager), this); // Listener when player trys double jumping
     }
 
     // Pass the plugin instance to the methods
     private void registerMethods() {
-        TeleportPlayers.register(this);
         Prefixes.register(this);
-        QueueManager.register(this);
-        PlayerCheck.register(this);
-        ItemDistributor.register(this);
-        ScoreboardUpdater.register(this);
     }
 
     private void startUpMessage() {
@@ -50,7 +54,16 @@ public final class PatientZero extends JavaPlugin {
     }
 
     private void registerCommands() {
-        new BaseCommand(this).register();
+        new BaseCommand(
+                new CreateMapCommand(),
+                new DeleteMapCommand(),
+                new JoinLeaveCommand(queue, queueManager),
+                new ListCommands(),
+                new MapSpawnsCommand(),
+                this,
+                queue,
+                new LocationSelection()
+        );
     }
 
     @Override

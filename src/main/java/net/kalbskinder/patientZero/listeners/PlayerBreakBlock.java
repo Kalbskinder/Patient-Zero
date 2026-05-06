@@ -1,14 +1,18 @@
 package net.kalbskinder.patientZero.listeners;
 
+import lombok.RequiredArgsConstructor;
 import net.kalbskinder.patientZero.systems.QueueManager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 
+@RequiredArgsConstructor
 public class PlayerBreakBlock implements Listener {
+    private final QueueManager queueManager;
+
     @EventHandler
     public void onPlayerBreakBlock(BlockBreakEvent event) {
-        if (QueueManager.isPlayerQueued(event.getPlayer())) {
+        if (queueManager.isPlayerQueued(event.getPlayer())) {
             event.setCancelled(true);
         }
     }

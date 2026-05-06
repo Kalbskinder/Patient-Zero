@@ -17,21 +17,21 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class ItemMaker {
-    private static final Logger logger = Logger.getLogger("PTZ");
+    private static final Logger LOGGER = Logger.getLogger("PTZ");
     private static final NamespacedKey ACTION_KEY = new NamespacedKey(PatientZero.getPlugin(PatientZero.class), "item_action");
-    private static final MiniMessage mm = MiniMessage.miniMessage();
+    private static final MiniMessage MM = MiniMessage.miniMessage();
 
     // Creates an ItemStack with the specified properties and optional right-click action.
-    public static ItemStack createItem(String item, int amount, String itemName, List<String> lore, String actionId) {
+    public ItemStack createItem(String item, int amount, String itemName, List<String> lore, String actionId) {
 
         // Validate input
         if (item == null || item.trim().isEmpty()) {
-            logger.warning("Invalid item identifier: " + item);
+            LOGGER.warning("Invalid item identifier: " + item);
             return null;
         }
 
         if (amount < 1) {
-            logger.warning("Invalid amount: " + amount + ". Setting to 1.");
+            LOGGER.warning("Invalid amount: " + amount + ". Setting to 1.");
             amount = 1;
         }
 
@@ -39,7 +39,7 @@ public class ItemMaker {
         String materialName = item.toUpperCase().replace("MINECRAFT:", "");
         Material material = Material.matchMaterial(materialName);
         if (material == null) {
-            logger.warning("Invalid material: " + item);
+            LOGGER.warning("Invalid material: " + item);
             return null;
         }
 
@@ -47,16 +47,16 @@ public class ItemMaker {
         ItemStack itemStack = new ItemStack(material, amount);
         ItemMeta meta = itemStack.getItemMeta();
         if (meta == null) {
-            logger.warning("Failed to get ItemMeta for material: " + materialName);
+            LOGGER.warning("Failed to get ItemMeta for material: " + materialName);
             return itemStack;
         }
 
         // Set display name
         if (itemName != null && !itemName.trim().isEmpty()) {
             if (itemName.contains("<italic>")) {
-                meta.displayName(mm.deserialize(itemName));
+                meta.displayName(MM.deserialize(itemName));
             } else {
-                meta.displayName(mm.deserialize("<!italic>" + itemName));
+                meta.displayName(MM.deserialize("<!italic>" + itemName));
             }
         }
 
@@ -64,7 +64,7 @@ public class ItemMaker {
         if (lore != null && !lore.isEmpty()) {
             List<Component> loreComponents = lore.stream()
                     .filter(Objects::nonNull)
-                    .map(mm::deserialize)
+                    .map(MM::deserialize)
                     .collect(Collectors.toList());
 
             meta.lore(loreComponents);
@@ -85,19 +85,19 @@ public class ItemMaker {
     }
 
     // Gives the item to a player in the specified inventory slot.
-    public static void giveItemToPlayer(Player player, ItemStack item, int slot) {
+    public void giveItemToPlayer(Player player, ItemStack item, int slot) {
         if (player == null || !player.isOnline()) {
-            logger.warning("Cannot give item to null or offline player");
+            LOGGER.warning("Cannot give item to null or offline player");
             return;
         }
         if (item == null) {
-            logger.warning("Cannot give null item to player: " + player.getName());
+            LOGGER.warning("Cannot give null item to player: " + player.getName());
             return;
         }
 
         // Available inventory slots of a players GUI
         if (slot < 0 || slot > 40) {
-            logger.warning("Invalid inventory slot: " + slot + " for player: " + player.getName());
+            LOGGER.warning("Invalid inventory slot: " + slot + " for player: " + player.getName());
             return;
         }
 
@@ -130,7 +130,7 @@ public class ItemMaker {
     }
 
     // Gets the action identifier from an ItemStack.
-    public static String getActionId(ItemStack item) {
+    public String getActionId(ItemStack item) {
         if (item == null || !item.hasItemMeta()) {
             return null;
         }

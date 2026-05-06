@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.UUID;
 
 public class DoubleJumpListener implements Listener {
+    private final QueueManager queueManager;
     private final boolean isDoubleJumpEnabled;
     private final String cooldownMessage;
     private final double velocity;
@@ -26,8 +27,10 @@ public class DoubleJumpListener implements Listener {
     private final HashMap<UUID, Long> lastJumpTime = new HashMap<>();
 
     // Read settings from the config.yml on plugin startup
-    public DoubleJumpListener(PatientZero plugin) {
+    public DoubleJumpListener(PatientZero plugin, QueueManager queueManager) {
         FileConfiguration config = plugin.getConfig();
+        this.queueManager = queueManager;
+
         this.isDoubleJumpEnabled = config.getBoolean("settings.double-jump.enabled", false);
         this.velocity = config.getDouble("settings.double-jump.velocity", 0.5);
         this.cooldownSeconds = config.getDouble("settings.double-jump.cooldown", 5);
@@ -48,12 +51,12 @@ public class DoubleJumpListener implements Listener {
         event.setCancelled(true);
 
         // Abort early if not applicable
-        if (!isDoubleJumpEnabled || player.getGameMode() == GameMode.CREATIVE || !QueueManager.isPlayerQueued(player)) {
+        if (!isDoubleJumpEnabled || player.getGameMode() == GameMode.CREATIVE || !queueManager.isPlayerQueued(player)) {
             return;
         }
 
         // Only allow double jumping in game
-        GameState gameState = QueueManager.getGameState(QueueManager.getMapOfPlayer(player));
+        GameState gameState = queueManager.getGameState(queueManager.getMapOfPlayer(player));
         if (gameState == GameState.WAITING || gameState == GameState.COUNTDOWN) {
             return;
         }
@@ -93,7 +96,7 @@ public class DoubleJumpListener implements Listener {
         }
 
         // Only if the player is in a queue
-        if (!QueueManager.isPlayerQueued(player)) return;
+        if (!queueManager.isPlayerQueued(player)) return;
 
         if (((Entity) player).isOnGround()) {
                 player.setAllowFlight(true);

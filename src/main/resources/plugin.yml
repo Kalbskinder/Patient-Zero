@@ -1,18 +1,17 @@
-name: Patient-Zero
+name: Infection
 version: '1.0.5'
-main: net.kalbskinder.patientZero.PatientZero
-description: A plugin that adds a new game mode called Patient-Zero
+main: net.kalbskinder.infection.Infection
+description: A plugin that adds a fun and competitive infection minigame
 api-version: '26.1'
 author: Kalbskinder
 
-
 permissions:
-  ptz.join:
-    description: Allows a player to run '/ptz join <map-name>'
+  infection.join:
+    description: Allows a player to run '/infection join <map-name>'
     default: true
-  ptz.leave:
-    description: Allows a player to run '/ptz leave'
+  infection.leave:
+    description: Allows a player to run '/infection leave'
     default: true
-  ptz.admin:
-    description: Allows a player to access all of the '/ptz <args>' commands.
+  infection.admin:
+    description: Allows a player to access all of the '/infection <args>' commands.
     default: op

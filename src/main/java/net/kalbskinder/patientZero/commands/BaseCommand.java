@@ -61,6 +61,8 @@ public class BaseCommand {
                             .executes(this::executeSetPos1)
                    .then(Commands.literal("pos2"))
                             .executes(this::executeSetPos2)
+                   .then(Commands.literal("discardSelection"))
+                            .executes(this::executeDiscardSelection)
                     .then(Commands.literal("list"))
                             .executes(this::executeListMaps))
                     .then(Commands.literal("deletemap")
@@ -273,7 +275,9 @@ public class BaseCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        locationSelection.setPos1(getFootBlockLocation(player));
+        Location location = getFootBlockLocation(player);
+        locationSelection.setPos1(location);
+        MMUtils.sendMessage(player, "<light_purple>Position 1 set to: " + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ());
         return Command.SINGLE_SUCCESS;
     }
 
@@ -283,7 +287,21 @@ public class BaseCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        locationSelection.setPos2(getFootBlockLocation(player));
+        Location location = getFootBlockLocation(player);
+        locationSelection.setPos2(location);
+        MMUtils.sendMessage(player, "<light_purple>Position 2 set to: " + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ());
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int executeDiscardSelection(CommandContext<CommandSourceStack> context) {
+        Player player = requirePlayer(context);
+        if (player == null || !playerHasPermission("ptz.admin", player)) {
+            return Command.SINGLE_SUCCESS;
+        }
+
+        locationSelection.setPos1(null);
+        locationSelection.setPos2(null);
+        MMUtils.sendMessage(player, PREFIX + "<light_purple>Location selection discarded.");
         return Command.SINGLE_SUCCESS;
     }
 

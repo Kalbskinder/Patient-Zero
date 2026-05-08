@@ -10,11 +10,18 @@ import net.kalbskinder.infection.systems.LocationSelection;
 import net.kalbskinder.infection.systems.Queue;
 import net.kalbskinder.infection.utils.MMUtils;
 import net.kalbskinder.infection.utils.Prefixes;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +29,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BaseCommand {
     private static final String PREFIX = Prefixes.getPrefix();
+    private static final MiniMessage mm = MiniMessage.miniMessage();
     private final List<CommandHelper> commands = new ArrayList<>();
     private final List<String> mapNameSuggestions = new ArrayList<>();
     private final List<String> roleSuggestions = List.of("infected", "survivor");
@@ -51,6 +59,7 @@ public class BaseCommand {
                 .sub("createmap").stringArg("map-name").executes(ctx -> executeCreateMap(ctx.getSender(), ctx.getString("map-name"))).end()
                 .sub("pos1").executes(ctx -> executeSetPos1(ctx.getSender())).end()
                 .sub("pos2").executes(ctx -> executeSetPos2(ctx.getSender())).end()
+                .sub("wand").executes(ctx -> executeWand(ctx.getSender())).end()
                 .sub("discardSelection").executes(ctx -> executeDiscardSelection(ctx.getSender())).end()
                 .sub("list").executes(ctx -> executeListMaps(ctx.getSender())).end()
                 .sub("deletemap").customArg("map-name", mapNameSuggestions).executes(ctx -> executeDeleteMap(ctx.getSender(), ctx.getString("map-name"))).end()
@@ -187,6 +196,35 @@ public class BaseCommand {
         locationSelection.setPos1(null);
         locationSelection.setPos2(null);
         MMUtils.sendMessage(player, PREFIX + "<light_purple>Location selection discarded.");
+    }
+
+    private void executeWand(CommandSender sender) {
+        Player player = verifyAdmin(sender);
+        if (player == null) return;
+
+        ItemStack wand = new ItemStack(Material.STICK);
+        wand.editMeta(meta -> {
+
+            meta.displayName(mm.deserialize("<!italic><light_purple>Selection Wand"));
+            meta.lore(List.of(
+                    mm.deserialize("<!italic><gray>Selects a region with left and right clicks,"),
+                    mm.deserialize("<!italic><gray>which can then be used to reate an Infection map."),
+                    mm.deserialize(""),
+                    mm.deserialize("<!italic><gray>Command aliases: <yellow>/infection pos1 <gray>& <yellow>/infection pos2"),
+                    mm.deserialize(""),
+                    mm.deserialize("<!italic><green>Left click to select point A."),
+                    mm.deserialize("<!italic><green>Right click to select point B.")
+            ));
+
+            meta.addEnchant(Enchantment.UNBREAKING, 1, true);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+
+            NamespacedKey key = new NamespacedKey(plugin, "infection_selection_wand");
+            meta.getPersistentDataContainer().set(key, PersistentDataType.BYTE, (byte) 1);
+        });
+
+        player.getInventory().addItem(wand);
+        MMUtils.sendMessage(player, PREFIX + "<green>Selection wand added to your inventory.");
     }
 
     /*

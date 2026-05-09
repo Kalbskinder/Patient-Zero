@@ -8,20 +8,21 @@ import net.kalbskinder.infection.systems.LocationSelection;
 import net.kalbskinder.infection.systems.Queue;
 import net.kalbskinder.infection.utils.MMUtils;
 import net.kalbskinder.infection.utils.Prefixes;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.Sound;
+import net.kyori.adventure.title.Title;
+import org.bukkit.*;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -115,6 +116,7 @@ public class BaseCommand {
         } else {
             MMUtils.sendMessage(player, PREFIX + "<red>Unknown help topic.");
             MMUtils.sendMessage(player, PREFIX + "<red>Available topics: <yellow>guide<red>, <yellow>commands");
+            player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_LAND, 1.0f, 1.0f);
         }
     }
 
@@ -242,8 +244,36 @@ public class BaseCommand {
             meta.getPersistentDataContainer().set(key, PersistentDataType.BYTE, (byte) 1);
         });
 
-        player.getInventory().addItem(wand);
-        MMUtils.sendMessage(player, PREFIX + "<green>Selection wand added to your inventory.");
+        PlayerInventory currentInventory = player.getInventory();
+        ItemStack[] currentItems = player.getInventory().getContents().clone();
+        HashMap<Integer, ItemStack> leftover = player.getInventory().addItem(wand);
+        if (!leftover.isEmpty()) {
+            // Inventory is full, notify player with title and sound effect
+            Title inventoryFull = Title.title(
+                    mm.deserialize("<red>Inventory Full!"),
+                    Component.empty()
+            );
+            player.showTitle(inventoryFull);
+            MMUtils.sendMessage(player, PREFIX + "<red><bold>Inventory full!");
+            MMUtils.sendMessage(player, PREFIX + "<red>Failed to add <light_purple>Selection Wand<red> to your inventory!");
+            player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 1.0f, 1.9f);
+            return;
+        }
+
+        for (int slot = 0; slot < 9; slot++) {
+            ItemStack oldItem = currentItems[slot];
+            ItemStack newItem = player.getInventory().getItem(slot);
+
+            if ((oldItem == null || oldItem.getType().isAir())
+                    && newItem != null
+                    && !newItem.getType().isAir()) {
+
+                currentInventory.setHeldItemSlot(slot);
+                break;
+            }
+        }
+
+        MMUtils.sendMessage(player, PREFIX + "<light_purple>Selection Wand<green> added to your inventory.");
     }
 
     /*

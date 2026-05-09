@@ -22,7 +22,6 @@ public final class Infection extends JavaPlugin {
     private QueueManager queueManager;
     private TeleportPlayers teleportPlayers;
     private RoleUtils roleUtils;
-    private ScoreboardUpdater scoreboardUpdater;
     private ScoreboardSessionManager scoreboardSessionManager;
     private LocationSelection locationSelection;
 
@@ -40,6 +39,7 @@ public final class Infection extends JavaPlugin {
         pm.registerEvents(new EntityShootArrow(queueManager), this); // Entity shoot arrow event, makes it so players can't pick up the arrow
         pm.registerEvents(new PlayerBreakBlock(queueManager), this); // Player break block event, cancel event if player is queued
         pm.registerEvents(new PlayerInteract(this, locationSelection), this); // Player interact event, used for map creation (selection wand)
+        pm.registerEvents(new PlayerJoin(this), this);
     }
 
     private void startUpMessage() {
@@ -84,7 +84,6 @@ public final class Infection extends JavaPlugin {
         queueManager = new QueueManager(this, itemActionHandler, itemMaker, itemDistributor);
         teleportPlayers = queueManager.getTeleportPlayers();
         roleUtils = queueManager.getRoleUtils();
-        scoreboardUpdater = queueManager.getScoreboardUpdater();
         scoreboardSessionManager = queueManager.getScoreboardSessionManager();
         queue = new Queue(queueManager);
 

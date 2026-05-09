@@ -1,7 +1,5 @@
 package net.kalbskinder.infection.commands;
 
-import com.mojang.brigadier.context.CommandContext;
-import io.papermc.paper.command.brigadier.CommandSourceStack;
 import lombok.RequiredArgsConstructor;
 import net.kalbskinder.helpers.commands.CommandHelper;
 import net.kalbskinder.helpers.commands.CommandManager;
@@ -33,6 +31,7 @@ public class BaseCommand {
     private final List<CommandHelper> commands = new ArrayList<>();
     private final List<String> mapNameSuggestions = new ArrayList<>();
     private final List<String> roleSuggestions = List.of("infected", "survivor");
+    private final List<String> helpSuggestions = List.of("guide", "commands");
 
     private final CreateMapCommand createMapCommand;
     private final DeleteMapCommand deleteMapCommand;
@@ -55,7 +54,8 @@ public class BaseCommand {
         }
 
         commands.add(CommandHelper.create("infection")
-                .sub("help").executes(ctx -> executeHelp(ctx.getSender())).end()
+                .sub("help").executes(ctx -> executeHelp(ctx.getSender(), "unknown")).end()
+                .sub("help").customArg("help-option", helpSuggestions).executes(ctx -> executeHelp(ctx.getSender(), ctx.getCustomArg("help-option"))).end()
                 .sub("createmap").stringArg("map-name").executes(ctx -> executeCreateMap(ctx.getSender(), ctx.getString("map-name"))).end()
                 .sub("pos1").executes(ctx -> executeSetPos1(ctx.getSender())).end()
                 .sub("pos2").executes(ctx -> executeSetPos2(ctx.getSender())).end()
@@ -68,6 +68,7 @@ public class BaseCommand {
                 .sub("setqueue-limit").customArg("map-name", mapNameSuggestions).intArg("limit").executes(ctx -> executeSetQueueLimit(ctx.getSender(), ctx.getString("map-name"), ctx.getInt("limit"))).end()
                 .sub("join").customArg("map-name", mapNameSuggestions).executes(ctx -> executeJoin(ctx.getSender(), ctx.getString("map-name"))).end()
                 .sub("leave").executes(ctx -> executeLeave(ctx.getSender())).end()
+                .executes(ctx -> executeBase(ctx.getSender()))
         );
 
         commandManager.registerCommands(commands);
@@ -80,23 +81,41 @@ public class BaseCommand {
         MMUtils.sendMessage(player, PREFIX + "<gray>Use <yellow>/infection help <gray>for a list of commands.<reset>");
     }
 
-    private void executeHelp(CommandSender sender) {
+    private void executeHelp(CommandSender sender, String helpOption) {
         Player player = verifyAdmin(sender);
         if (player == null) return;
 
-        MMUtils.sendMessage(player, PREFIX + "<green>Available commands:<reset>");
-        MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>createmap <gray><map-name>");
-        MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>pos1");
-        MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>pos2");
-        MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>discardSelection");
-        MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>deletemap <gray><map-name>");
-        MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>addspawn <gray><map-name> <role>");
-        MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>setqueue-spawn <gray><map-name>");
-        MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>setqueue-limit <gray><map-name> <int-limit>");
-        MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>list");
-        MMUtils.sendMessage(player, "");
-        MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>join <gray><map-name>");
-        MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>leave");
+        if (helpOption.equals("guide")) {
+            MMUtils.sendMessage(player, PREFIX + "<green>Step by step setup guide:");
+            MMUtils.sendMessage(player, "<gray>1. <white>Use <yellow>/infection wand<white> to get the area selection wand.");
+            MMUtils.sendMessage(player, "<gray>2. <white>Use the <light_purple>Selection Wand <white>to select a map area.");
+            MMUtils.sendMessage(player, "<gray>3. <white>Create a map using <yellow>/infection createmap <gray><map-name><white>.");
+            MMUtils.sendMessage(player, "<gray>4. <white>Set a queue spawn");
+            MMUtils.sendMessage(player, "<gray>   <white>using <yellow>/infection setqueue-spawn <gray><map-name><white>.");
+            MMUtils.sendMessage(player, "<gray>5. <white>Optionally change the maximum queue size");
+            MMUtils.sendMessage(player, "<gray>   <white>using <yellow>/infection setqueue-limit <gray><map-name> <limit><white>.");
+            MMUtils.sendMessage(player, "<gray>6. <white>Set the spawnpoints where survivors/infected players");
+            MMUtils.sendMessage(player, "<gray>   <white>will spawn using <yellow>/infection addspawn <gray><map-name> <role><white>.");
+            MMUtils.sendMessage(player, "<white>You can now join the map using <yellow>/infection join <gray><map-name>");
+        } else if (helpOption.equals("commands")) {
+            MMUtils.sendMessage(player, PREFIX + "<green>Available commands:<reset>");
+            MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>createmap <gray><map-name>");
+            MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>pos1");
+            MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>pos2");
+            MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>wand");
+            MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>discardSelection");
+            MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>deletemap <gray><map-name>");
+            MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>addspawn <gray><map-name> <role>");
+            MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>setqueue-spawn <gray><map-name>");
+            MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>setqueue-limit <gray><map-name> <int-limit>");
+            MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>list");
+            MMUtils.sendMessage(player, "");
+            MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>join <gray><map-name>");
+            MMUtils.sendMessage(player, "<gray>- <yellow>/infection <gold>leave");
+        } else {
+            MMUtils.sendMessage(player, PREFIX + "<red>Unknown help topic.");
+            MMUtils.sendMessage(player, PREFIX + "<red>Available topics: <yellow>guide<red>, <yellow>commands");
+        }
     }
 
     private void executeCreateMap(CommandSender sender, String mapName) {
@@ -254,7 +273,7 @@ public class BaseCommand {
             return true;
         } else {
             player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_LAND, 1.0f, 1.0f);
-            MMUtils.sendMessage(player, PREFIX + "<red>You don't have permission to use this command!");
+            MMUtils.sendMessage(player, "<red>You don't have permission to use this command!");
             return false;
         }
     }

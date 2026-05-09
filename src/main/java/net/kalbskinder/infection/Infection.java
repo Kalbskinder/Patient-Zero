@@ -6,7 +6,6 @@ import net.kalbskinder.infection.commands.*;
 import net.kalbskinder.infection.listeners.*;
 import net.kalbskinder.infection.systems.*;
 import net.kalbskinder.infection.systems.scoreboard.ScoreboardSessionManager;
-import net.kalbskinder.infection.systems.scoreboard.ScoreboardUpdater;
 import net.kalbskinder.infection.utils.*;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -30,11 +29,11 @@ public final class Infection extends JavaPlugin {
     // Register event listeners
     private void registerListeners() {
         PluginManager pm = getServer().getPluginManager();
-        pm.registerEvents(new PlayerQuit(queueManager), this); // Player quit event
+        pm.registerEvents(new PlayerQuit(queueManager, locationSelection), this); // Player quit event
         pm.registerEvents(new PlayerMove(queueManager, playerCheck, teleportPlayers), this); // Player move event
         pm.registerEvents(itemActionHandler, this); // Item right-click event
         pm.registerEvents(new PlayerDropItem(queueManager), this); // Drop item event
-        pm.registerEvents(new PlayerChangeWorld(queueManager), this); // Player change world event
+        pm.registerEvents(new PlayerChangeWorld(queueManager, locationSelection), this); // Player change world event
         pm.registerEvents(new PlayerTakeDamage(queueManager, scoreboardSessionManager, itemDistributor, teleportPlayers, roleUtils), this); // Player takes damage, handles respawn and game end mechanics
         pm.registerEvents(new EntityShootArrow(queueManager), this); // Entity shoot arrow event, makes it so players can't pick up the arrow
         pm.registerEvents(new PlayerBreakBlock(queueManager), this); // Player break block event, cancel event if player is queued
@@ -79,7 +78,7 @@ public final class Infection extends JavaPlugin {
         itemMaker = new ItemMaker(this);
         itemActionHandler = new ItemActionHandler(itemMaker);
         itemDistributor = new ItemDistributor(this, itemMaker);
-        locationSelection = new LocationSelection();
+        locationSelection = new LocationSelection(this);
 
         queueManager = new QueueManager(this, itemActionHandler, itemMaker, itemDistributor);
         teleportPlayers = queueManager.getTeleportPlayers();

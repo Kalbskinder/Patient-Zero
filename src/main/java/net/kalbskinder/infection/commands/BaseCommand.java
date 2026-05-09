@@ -124,8 +124,8 @@ public class BaseCommand {
         Player player = verifyAdmin(sender);
         if (player == null) return;
 
-        Location pos1 = locationSelection.getPos1();
-        Location pos2 = locationSelection.getPos2();
+        Location pos1 = locationSelection.getPos1(player);
+        Location pos2 = locationSelection.getPos2(player);
 
         if (pos1 == null || pos2 == null) {
             MMUtils.sendMessage(player, PREFIX + "<red>You need to set both positions first using '/infection pos1' and '/infection pos2'.");
@@ -197,7 +197,7 @@ public class BaseCommand {
         if (player == null) return;
 
         Location location = getFootBlockLocation(player);
-        locationSelection.setPos1(location);
+        locationSelection.setPos1(player, location);
         MMUtils.sendMessage(player, "<light_purple>Position 1 set to: " + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ());
     }
 
@@ -206,7 +206,7 @@ public class BaseCommand {
         if (player == null) return;
 
         Location location = getFootBlockLocation(player);
-        locationSelection.setPos2(location);
+        locationSelection.setPos2(player, location);
         MMUtils.sendMessage(player, "<light_purple>Position 2 set to: " + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ());
     }
 
@@ -214,8 +214,7 @@ public class BaseCommand {
         Player player = verifyAdmin(sender);
         if (player == null) return ;
 
-        locationSelection.setPos1(null);
-        locationSelection.setPos2(null);
+        locationSelection.clearSelection(player);
         MMUtils.sendMessage(player, PREFIX + "<light_purple>Location selection discarded.");
     }
 

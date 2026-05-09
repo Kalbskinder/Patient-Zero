@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import net.kalbskinder.infection.Infection;
 import net.kalbskinder.infection.systems.LocationSelection;
 import net.kalbskinder.infection.utils.MMUtils;
+import net.kalbskinder.infection.utils.Prefixes;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -19,6 +20,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 public class PlayerInteract implements Listener {
     private final Infection plugin;
     private final LocationSelection locationSelection;
+
+    private static final String PREFIX = Prefixes.getPrefix();
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
@@ -37,13 +40,13 @@ public class PlayerInteract implements Listener {
             if (clickedBlock == null) return;
             if (action == Action.RIGHT_CLICK_BLOCK) {
                 event.setCancelled(true);
-                locationSelection.setPos2(event.getClickedBlock().getLocation());
-                MMUtils.sendMessage(player, "<light_purple>Position 2 set to: " + clickedBlock.getX() + ", " + clickedBlock.getY() + ", " + clickedBlock.getZ());
+                locationSelection.setPos2(player, event.getClickedBlock().getLocation());
+                MMUtils.sendMessage(player, PREFIX + "<light_purple>Position 2 set to: " + clickedBlock.getX() + ", " + clickedBlock.getY() + ", " + clickedBlock.getZ());
 
             } else if (action == Action.LEFT_CLICK_BLOCK) {
                 event.setCancelled(true);
-                locationSelection.setPos1(event.getClickedBlock().getLocation());
-                MMUtils.sendMessage(player, "<light_purple>Position 1 set to: " + clickedBlock.getX() + ", " + clickedBlock.getY() + ", " + clickedBlock.getZ());
+                locationSelection.setPos1(player, event.getClickedBlock().getLocation());
+                MMUtils.sendMessage(player, PREFIX + "<light_purple>Position 1 set to: " + clickedBlock.getX() + ", " + clickedBlock.getY() + ", " + clickedBlock.getZ());
 
             }
 

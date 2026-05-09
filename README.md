@@ -1,27 +1,25 @@
-# Infection
-A Minecraft plugin that adds the Hypixel minigame Infection to your server.
+<p align="center">
+    <img src="https://cdn.modrinth.com/data/5RQMBtQG/751ef8394583803f190a4e8d8cf9e9eb9e344406.png" alt="Infection Logo" width="256">
+</p>
+
+<h1 align="center">Infection</h1>
+<p align="center">A Minecraft plugin that adds the Hypixel minigame Infection to your server.</p>
 
 ## Overview
-- Commands
+- How to use
 - Permissions
 
-## Commands
-A list of available commands that the plugin adds
-<br><br>
-![List of commands](https://cdn.modrinth.com/data/5RQMBtQG/images/a8cb401775f6b95bbe4072deaf7d0703eed8c057.png)
+## How to use
 
-- `/infection help`
-- `/infection createmap <map-name>`
-- `/infection pos1`
-- `/infection pos2`
-- `/infection discardSelection`
-- `/infection deletemap <map-name>`
-- `/infection addspawn <map-name> <role>`
-- `/infection setqueue-spawn <map-name>`
-- `/infection setqueue-limit <map-name> <int-max>`
-- `/infection list`
-- `/infection join <map-name>`
-- `/infection leave`
+1. Use `/infection wand` to get the area selection wand.
+2. Use the Selection Wand to select a map area.
+3. Create a map using `/infection createmap <map-name>`.
+4. Set a queue spawn using `/infection setqueue-spawn <map-name>`.
+5. Optionally change the maximum queue size using `/infection setqueue-limit <map-name> <limit>`.
+6. Set the spawnpoints where survivors/infected players will spawn using `/infection addspawn <map-name> <role>`.
+7. You can now join the map using `/infection join <map-name>`.
+
+Use `/infection help guide` and `/infection help commands` for more information.
 
 ## Permissions
 ```yml

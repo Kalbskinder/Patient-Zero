@@ -1,5 +1,5 @@
 name: Infection
-version: '1.0.5'
+version: '2.0.0'
 main: net.kalbskinder.infection.Infection
 description: A plugin that adds a fun and competitive infection minigame
 api-version: '26.1'

@@ -32,7 +32,7 @@ public final class Infection extends JavaPlugin {
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(new PlayerQuit(queueManager), this); // Player quit event
         pm.registerEvents(new PlayerMove(queueManager, playerCheck, teleportPlayers), this); // Player move event
-        pm.registerEvents(new ItemActionHandler(itemMaker), this); // Item right-click event
+        pm.registerEvents(itemActionHandler, this); // Item right-click event
         pm.registerEvents(new PlayerDropItem(queueManager), this); // Drop item event
         pm.registerEvents(new PlayerChangeWorld(queueManager), this); // Player change world event
         pm.registerEvents(new PlayerTakeDamage(queueManager, scoreboardSessionManager, itemDistributor, teleportPlayers, roleUtils), this); // Player takes damage, handles respawn and game end mechanics

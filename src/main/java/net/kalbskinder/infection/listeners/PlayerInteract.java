@@ -11,6 +11,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 @RequiredArgsConstructor
@@ -20,9 +22,14 @@ public class PlayerInteract implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND) return;
+
         Player player = event.getPlayer();
         NamespacedKey requiredKey = new NamespacedKey(plugin, "infection_selection_wand");
-        ItemMeta meta = player.getInventory().getItemInMainHand().getItemMeta();
+        ItemStack item = event.getItem();
+        if (item == null) return;
+
+        ItemMeta meta = item.getItemMeta();
         if (meta != null && meta.getPersistentDataContainer().has(requiredKey)) {
             event.setCancelled(true);
             Action action = event.getAction();

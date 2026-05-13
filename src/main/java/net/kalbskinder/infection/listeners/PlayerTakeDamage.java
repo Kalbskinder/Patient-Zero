@@ -30,8 +30,8 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 public class PlayerTakeDamage implements Listener {
-    private FileConfiguration config;
-    private Infection plugin;
+    private final FileConfiguration config;
+    private final Infection plugin;
     private final QueueManager queueManager;
     private final ScoreboardSessionManager scoreboardSessionManager;
     private final ItemDistributor itemDistributor;

@@ -34,7 +34,7 @@ public final class Infection extends JavaPlugin {
         pm.registerEvents(itemActionHandler, this); // Item right-click event
         pm.registerEvents(new PlayerDropItem(queueManager), this); // Drop item event
         pm.registerEvents(new PlayerChangeWorld(queueManager, locationSelection), this); // Player change world event
-        pm.registerEvents(new PlayerTakeDamage(queueManager, scoreboardSessionManager, itemDistributor, teleportPlayers, roleUtils), this); // Player takes damage, handles respawn and game end mechanics
+        pm.registerEvents(new PlayerTakeDamage(getConfig(), this, queueManager, scoreboardSessionManager, itemDistributor, teleportPlayers, roleUtils), this); // Player takes damage, handles respawn and game end mechanics
         pm.registerEvents(new EntityShootArrow(queueManager), this); // Entity shoot arrow event, makes it so players can't pick up the arrow
         pm.registerEvents(new PlayerBreakBlock(queueManager), this); // Player break block event, cancel event if player is queued
         pm.registerEvents(new PlayerInteract(this, locationSelection), this); // Player interact event, used for map creation (selection wand)

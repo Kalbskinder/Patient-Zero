@@ -49,7 +49,7 @@ public class PlayerTakeDamage implements Listener {
             if (!queueManager.isPlayerQueued(victim)) return;
 
             String mapName = queueManager.getMapOfPlayer(victim);
-                QueueInfo queue = queueManager.getQueueInfo(mapName);
+            QueueInfo queue = queueManager.getQueueInfo(mapName);
 
             // Only allow damage in game
             if (queue.getState() != GameState.INGAME) {
@@ -102,7 +102,6 @@ public class PlayerTakeDamage implements Listener {
                         String title = config.getString("titles.roles.final-death.title", "<red>You died!");
                         String subtitle = config.getString("titles.roles.final-death.subtitle", "<yellow>You can't respawn anymore!");
                         MMUtils.displayTitle(victim, title, subtitle, 1f, 3f, 1f);
-                        victim.performCommand(config.getString("settings.executes.playerOnFinalDeath", "/me Teleport me!").substring(1));
                     }
 
                     // Only survivors can damage the alpha
